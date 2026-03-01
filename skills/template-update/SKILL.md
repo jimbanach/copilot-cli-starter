@@ -36,105 +36,57 @@ git remote add upstream https://github.com/jimbanach/copilot-cli-starter.git
 
 Confirm to the user: "Added upstream remote pointing to the template source."
 
-## Workflow: Check for Template Updates
+## Workflow: Check for Starter Updates
 
-**Triggers:** "Check for template updates", "Are there new features from the template?", "Pull upstream changes"
+**Triggers:** "Check for starter updates", "Pull starter updates", "Sync from starter"
 
 **Steps:**
 
-1. Verify `upstream` remote exists. If not, ask the user to add it.
+1. Find the copilot-cli-starter repo (check cwd, then `~/copilot-cli-starter`)
+2. `cd` to the repo directory
 
-2. Fetch latest from upstream:
-   ```bash
-   git fetch upstream
-   ```
-
-3. Compare local against upstream/main. Show what's changed:
-   ```bash
-   git --no-pager log HEAD..upstream/main --oneline
-   ```
-
-4. If there are new commits, present a summary:
-
-```
-📊 Template Update — What's New
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Upstream has 3 new commits since your last pull:
-
-📝 Changes:
-   • New skill: config-sync (compare, sanitize, sync-state scripts)
-   • Updated: personas/architect-marketer/AGENTS.md (generalized)
-   • Updated: README.md (added prerequisites section)
-
-What would you like to do?
-  [1] Review changes — see diffs before deciding
-  [2] Incorporate all — merge upstream into your branch
-  [3] Skip for now — don't merge, check again later
-```
-
-5. If "Review changes": For each changed file, show the diff. After showing the diff, present structured options — do NOT ask freeform:
-```
-  [1] Incorporate — accept this change
-  [2] Skip — keep your local version
-```
-
-6. If "Incorporate all" or selective incorporations:
-   - Create a backup branch before merging: `git checkout -b backup-before-update`
-   - Switch back and merge: `git merge upstream/main --no-commit`
-   - If conflicts exist, show them and help resolve
-   - Commit with a descriptive message
-   - **IMMEDIATELY proceed to step 7 — do NOT stop here. The merge is not complete until files are deployed.**
-
-7. **⚠️ CRITICAL — DEPLOY TO LOCAL SETUP (DO NOT SKIP THIS STEP) ⚠️**
-
-   After a successful merge, you MUST deploy the changed files to `~/.copilot/`. The user should NOT have to manually re-run `init.ps1`. This step is REQUIRED — the update is not complete without it.
-
-   Run these commands to get the list of changed files and copy them:
+3. **To incorporate updates** (fetch + merge + deploy in one step), run this script:
 
    ```powershell
-   # Get list of files that changed in the merge
-   $changedFiles = git --no-pager diff HEAD~1 --name-only
-
-   # Deploy each changed file to ~/.copilot/
-   foreach ($file in $changedFiles) {
-       $dest = $null
-       if ($file -match '^personas/') { $dest = "$env:USERPROFILE\.copilot\$file" }
-       elseif ($file -match '^skills/') { $dest = "$env:USERPROFILE\.copilot\$file" }
-       elseif ($file -match '^agents/') { $dest = "$env:USERPROFILE\.copilot\$file" }
-       elseif ($file -match '^scripts/(.+)') { $dest = "$env:USERPROFILE\.copilot\$($matches[1])" }
-
-       if ($dest) {
-           $destDir = Split-Path $dest -Parent
-           if (-not (Test-Path $destDir)) { New-Item -ItemType Directory $destDir -Force | Out-Null }
-           Copy-Item $file $dest -Force
-           Write-Host "Deployed: $file"
-       }
-   }
+   powershell -File skills/template-update/update-starter.ps1
    ```
 
-   After deploying, show a summary:
-   ```
-   ✅ Deployed to ~/.copilot/:
-      • personas/deep-technical/AGENTS.md
-      • skills/research/references/sources.md
+   The script handles everything:
+   - Verifies/adds upstream remote
+   - Fetches latest from upstream
+   - Shows what's new (commits + changed files)
+   - Merges upstream/main
+   - **Deploys changed files directly to `~/.copilot/`**
+   - Shows a deployment summary
 
-   ⚠️  Not auto-deployed (run init.ps1 if needed):
-      • base/copilot-instructions.md.template (requires variable resolution)
+4. **To preview without changes** (dry run):
+   ```powershell
+   powershell -File skills/template-update/update-starter.ps1 -DryRun
+   ```
+
+5. **If the user wants to review diffs first**, show them before running the script:
+   ```bash
+   git fetch upstream
+   git --no-pager diff HEAD..upstream/main
+   ```
+   Then present structured options — do NOT ask freeform:
+   ```
+   [1] Incorporate — run the update script to merge and deploy
+   [2] Skip — don't merge, check again later
    ```
 
 ## Handling Merge Conflicts
 
-If upstream changes conflict with your local customizations:
+If the update script reports a merge conflict:
 
 1. Show the conflicted files
 2. For each conflict, display both versions (yours vs upstream)
 3. Ask the user which to keep, or offer to open in editor
 4. After resolution, complete the merge commit
+5. Re-run the deploy portion of the script
 
 ## Important Notes
 
-- This skill never force-merges. Every change requires user approval.
+- The `update-starter.ps1` script is the **single source of truth** for the update workflow. Always use it instead of running git commands separately.
 - Your local customizations (personas you've edited, skills you've added) are preserved — only upstream additions and changes to files you haven't modified are auto-incorporated.
-- Always create a backup branch before merging so you can revert if needed.
-- After incorporating updates, run `init.ps1` to deploy changes to your local `~/.copilot/`.
+- Files under `base/` (templates, instance rules) are NOT auto-deployed because they require variable resolution — the script will tell the user to run `init.ps1` if those changed.
