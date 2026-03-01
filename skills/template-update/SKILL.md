@@ -73,28 +73,55 @@ What would you like to do?
   [3] Skip for now — don't merge, check again later
 ```
 
-5. If "Review changes": For each changed file, show the diff and ask:
-   - **Incorporate** — accept the upstream change
-   - **Skip** — keep your local version
-   - **Show diff** — see the detailed line-by-line diff
+5. If "Review changes": For each changed file, show the diff. After showing the diff, present structured options — do NOT ask freeform:
+```
+  [1] Incorporate — accept this change
+  [2] Skip — keep your local version
+```
 
 6. If "Incorporate all" or selective incorporations:
    - Create a backup branch before merging: `git checkout -b backup-before-update`
    - Switch back and merge: `git merge upstream/main --no-commit`
    - If conflicts exist, show them and help resolve
    - Commit with a descriptive message
+   - **IMMEDIATELY proceed to step 7 — do NOT stop here. The merge is not complete until files are deployed.**
 
-7. After a successful merge, **automatically deploy the changed files to `~/.copilot/`**. Do NOT require the user to manually re-run `init.ps1`. Instead:
-   - For each changed file from the merge, determine its local `~/.copilot/` destination:
-     - `personas/<name>/AGENTS.md` → `~/.copilot/personas/<name>/AGENTS.md`
-     - `skills/<name>/...` → `~/.copilot/skills/<name>/...`
-     - `agents/*.agent.md` → `~/.copilot/agents/*.agent.md`
-     - `scripts/*.ps1` → `~/.copilot/*.ps1`
-     - `base/copilot-instructions.md.template` → skip (requires variable resolution via init.ps1)
-     - `base/instance-rules/...` → skip (instance-specific, don't auto-deploy)
-   - Copy each changed file to its destination
-   - Show a summary of what was deployed
-   - If base template or instance rules changed, tell the user: "Base instructions or instance rules were updated — run `.\init.ps1` to apply those changes (they require variable resolution)."
+7. **⚠️ CRITICAL — DEPLOY TO LOCAL SETUP (DO NOT SKIP THIS STEP) ⚠️**
+
+   After a successful merge, you MUST deploy the changed files to `~/.copilot/`. The user should NOT have to manually re-run `init.ps1`. This step is REQUIRED — the update is not complete without it.
+
+   Run these commands to get the list of changed files and copy them:
+
+   ```powershell
+   # Get list of files that changed in the merge
+   $changedFiles = git --no-pager diff HEAD~1 --name-only
+
+   # Deploy each changed file to ~/.copilot/
+   foreach ($file in $changedFiles) {
+       $dest = $null
+       if ($file -match '^personas/') { $dest = "$env:USERPROFILE\.copilot\$file" }
+       elseif ($file -match '^skills/') { $dest = "$env:USERPROFILE\.copilot\$file" }
+       elseif ($file -match '^agents/') { $dest = "$env:USERPROFILE\.copilot\$file" }
+       elseif ($file -match '^scripts/(.+)') { $dest = "$env:USERPROFILE\.copilot\$($matches[1])" }
+
+       if ($dest) {
+           $destDir = Split-Path $dest -Parent
+           if (-not (Test-Path $destDir)) { New-Item -ItemType Directory $destDir -Force | Out-Null }
+           Copy-Item $file $dest -Force
+           Write-Host "Deployed: $file"
+       }
+   }
+   ```
+
+   After deploying, show a summary:
+   ```
+   ✅ Deployed to ~/.copilot/:
+      • personas/deep-technical/AGENTS.md
+      • skills/research/references/sources.md
+
+   ⚠️  Not auto-deployed (run init.ps1 if needed):
+      • base/copilot-instructions.md.template (requires variable resolution)
+   ```
 
 ## Handling Merge Conflicts
 
