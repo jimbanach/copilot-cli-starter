@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "tools": [
+        "*"
+      ],
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "msedge"
+      ]
+    },
+    "workiq": {
+      "tools": [
+        "*"
+      ],
+      "command": "npx",
+      "args": [
+        "-y",
+        "@microsoft/workiq",
+        "mcp"
+      ]
+    },
+    "microsoft-docs-mcp": {
+      "tools": [
+        "*"
+      ],
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "headers": {}
+    }
+  }
+}

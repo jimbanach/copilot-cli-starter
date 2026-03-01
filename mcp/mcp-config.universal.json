@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "microsoft-docs-mcp": {
+      "tools": [
+        "*"
+      ],
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "headers": {}
+    },
+    "playwright": {
+      "tools": [
+        "*"
+      ],
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "msedge"
+      ]
+    }
+  }
+}

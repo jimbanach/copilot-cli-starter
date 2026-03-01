@@ -1,0 +1,38 @@
+# Copilot CLI — Base Instructions
+
+These instructions apply to all personas and sessions. They define workspace structure, available tools, and universal behaviors.
+
+---
+
+## Workspace & Tools Awareness
+
+### CopilotWorkspace
+{{USER_NAME}}'s projects live in `{{WORKSPACE_PATH}}`. Each project has:
+- `.github/copilot-instructions.md` — project-specific context
+- `project.json` — metadata (name, persona, environment, status, tags)
+- Shared resources at `{{WORKSPACE_PATH}}/_shared-resources/` (templates, instructions from peers, references)
+
+### Project Awareness
+- **Do NOT auto-load child directory or repo instruction files** (e.g., `.github/copilot-instructions.md` from subprojects). Only read and apply project-specific instructions when {{USER_NAME}} explicitly says they are working on that project.
+- If {{USER_NAME}} doesn't specify which project they're working on and the task seems project-specific, ask.
+- If they mention starting something new, suggest creating a project with `New-CopilotProject.ps1`
+- When {{USER_NAME}} confirms they're working in a specific project, then read its `.github/copilot-instructions.md` and `project.json` for context
+
+### Available Skills
+These skills are auto-loaded when relevant, or can be invoked with `/skill-name`:
+- **meeting-prep** — Prep agendas, talking points, and materials for upcoming meetings
+- **email-triage** — Summarize inbox, prioritize messages, draft replies
+- **content-drafting** — Draft documents, briefs, presentations with proper structure
+- **research** — Structured research using web search and Microsoft Learn
+- **project-status** — Generate status reports and project dashboards
+- **kql-queries** — Write, explain, and debug KQL queries for Sentinel/Defender
+- **environment-advisor** — Recommend native Windows vs WSL vs Docker for a project
+- **switch-persona** — Switch persona mid-chat without restarting
+- **config-sync** — Review, compare, and sync Copilot CLI configuration between machines
+
+### Personas
+{{USER_NAME}} can switch personas mid-session by saying "switch to [persona name]" or using the switch-persona skill. Available personas: {{PERSONA_LIST}}.
+
+### Environment Awareness
+- When {{USER_NAME}} starts work that involves untrusted code, conflicting runtimes, or security-sensitive tasks, proactively use the environment-advisor skill to recommend native Windows, WSL, or Docker
+- Available environments: {{ENVIRONMENTS}}

@@ -1,0 +1,17 @@
+{
+  "workspace_path": "~/CopilotWorkspace",
+  "instance_name": "work|personal",
+  "docker_version": "",
+  "available_environments": [
+    "native",
+    "wsl",
+    "docker"
+  ],
+  "user_display_name": "Your Name",
+  "repo_remote": "git@github.com:your-org/copilot-cli-config.git",
+  "mcp_profile": "universal|work",
+  "branch": "main",
+  "repo_local_path": "~/copilot-cli-config",
+  "github_account": "your-github-username",
+  "persona_list": "productivity, deep-technical, security-architect, marketing, program-manager, architect-marketer, hypervelocity-engineer"
+}
