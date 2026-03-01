@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-01] - Phase 5b: Upstream update support
+### Added
+- `skills/template-update/SKILL.md` — skill for checking and pulling upstream template updates
+- README: "Pulling Updates" section with upstream remote setup and manual/conversational workflows
+
 ## [2026-03-01] - Phase 5a: Initial template population
 ### Added
 - All 7 personas as AGENTS.md files (sanitized — `{{YOUR_NAME}}` and `{{WORKSPACE_PATH}}` variables)

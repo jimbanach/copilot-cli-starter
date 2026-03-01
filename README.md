@@ -137,7 +137,26 @@ Both are supported! The init script auto-detects which you have and deploys acco
 
 ## Pulling Updates
 
-*Section added in Phase 5b*
+When the template maintainer publishes improvements, you can pull them into your fork:
+
+### First Time — Add Upstream Remote
+```powershell
+git remote add upstream https://github.com/jimbanach/copilot-cli-starter.git
+```
+
+### Check for Updates
+Just ask Copilot: **"Check for template updates"** — the `template-update` skill handles the rest.
+
+Or manually:
+```powershell
+git fetch upstream
+git log HEAD..upstream/main --oneline    # See what's new
+git merge upstream/main --no-commit      # Preview merge
+git diff --staged                        # Review changes
+git commit -m "Pull upstream updates"    # Accept, or git merge --abort to cancel
+```
+
+After pulling updates, re-run `.\init.ps1` to deploy new content to `~/.copilot/`.
 
 ## Contributing
 
