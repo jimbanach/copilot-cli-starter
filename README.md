@@ -2,6 +2,20 @@
 
 A ready-to-use Copilot CLI (and VS Code) workspace template with personas, skills, agents, and an interactive setup wizard.
 
+## Prerequisites
+
+Before getting started, make sure you have:
+
+- **Git** — [Install Git](https://git-scm.com/downloads)
+- **GitHub Copilot CLI** — [Install Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) (requires an active Copilot subscription)
+- **GitHub CLI (`gh`)** — [Install gh CLI](https://cli.github.com/) (used for authentication and repo management)
+- **PowerShell 6+** — [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) (required on Windows; pre-installed on most systems)
+- **Python 3.10+** — [Install Python](https://www.python.org/downloads/) (required for comparison and sync scripts)
+
+Optional:
+- **VS Code** with GitHub Copilot extension — if you prefer IDE-based Copilot over CLI
+- **WSL** or **Docker** — for isolated development environments
+
 ## Quick Start
 
 1. **Fork** this repo to your own GitHub account
@@ -39,7 +53,11 @@ Role-specific AI assistants you can switch between:
 | `architect-marketer` | Blends technical depth with GTM & program management |
 | `hypervelocity-engineer` | HVE practitioner — AI-native, outcome-focused rapid delivery |
 
-Switch with: `~/.copilot/Switch-CopilotPersona.ps1 -Persona productivity`
+Switch personas in any of these ways:
+- **In conversation:** Just say "switch to productivity" or "change persona to deep-technical"
+- **Via the switch-persona skill:** Copilot auto-detects when you want to switch
+- **Via script:** `~/.copilot/Switch-CopilotPersona.ps1 -Persona productivity`
+- **List all:** `~/.copilot/Switch-CopilotPersona.ps1 -List`
 
 <!-- CUSTOMIZE: These personas are examples. Edit any AGENTS.md to match your role, or create new ones by adding a directory under personas/ with an AGENTS.md file. -->
 
@@ -49,8 +67,10 @@ Portable capabilities that auto-load when relevant (works in both CLI and VS Cod
 - KQL queries, PDF/DOCX/PPTX/XLSX manipulation
 - Environment advisor, skill creator, and more
 
-### 4 Custom Agents
+### Custom Agents
+Specialized agents for complex workflows:
 - Meeting notes summarizer, transcript processor, video analyzer, slide architect
+- See `agents/` for the full list — add your own by creating `.agent.md` files
 
 ### 3-Layer Instruction Model
 
@@ -93,6 +113,7 @@ graph TD
    ```powershell
    ~/.copilot/Switch-CopilotPersona.ps1 -List
    ```
+   Or just tell Copilot: "switch to my-role"
 
 ### Edit Instance Rules (Layer 2)
 
@@ -108,9 +129,10 @@ Both are supported! The init script auto-detects which you have and deploys acco
 
 ## Known Limitations
 
-- Native Linux is untested (Windows + WSL validated)
-- VS Code MCP config is deployed separately and not auto-synced with CLI MCP
-- See [open issues](../../issues) for known bugs and planned enhancements
+- **WSL is untested** — this setup is built and tested on Windows with PowerShell. WSL may work but has not been validated yet.
+- **Native Linux is untested** — see the sync repo for tracking on Linux support
+- **VS Code MCP config** is deployed separately and not auto-synced with CLI MCP
+- Known issues from the upstream config repo may not always be reflected here — check with the repo maintainer for the latest
 
 ## Pulling Updates
 
