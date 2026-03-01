@@ -41,3 +41,7 @@ When asked to draft a reply:
 
 ## Output Format
 Present as a prioritized table, then detail the urgent/action items below.
+
+
+## Tip
+- Flag emails from your manager or skip-level as high priority by default
