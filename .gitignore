@@ -1,0 +1,32 @@
+# Instance-specific (never commit)
+instance-config.json
+.copilot-sync/
+sync-state.json
+
+# Copilot CLI runtime
+config.json
+permissions-config.json
+command-history-state.json
+session-state/
+session-store.db
+session-store.db-shm
+session-store.db-wal
+logs/
+ide/
+pkg/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/settings.json
