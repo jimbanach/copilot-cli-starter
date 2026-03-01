@@ -12,19 +12,29 @@ Checks the upstream `copilot-cli-starter` template for new or updated content an
 - Your repo must be a **fork** of the upstream template (or have an `upstream` remote configured)
 - Git must be available in the terminal
 
+**Note:** The skill auto-detects and configures everything. The user does NOT need to manually set up remotes or navigate to the repo directory — the skill handles it.
+
+## Finding the Repo
+
+1. Check if `cwd` is inside a git repo that has `init.ps1` and `personas/` directory
+2. If not, search common locations: `~/copilot-cli-starter`, `~/GitHubProjects/copilot-cli-starter`
+3. If not found, ask the user for the repo path
+4. `cd` to the repo before proceeding
+
 ## Setting Up Upstream
 
-If the `upstream` remote isn't configured yet, set it up:
+Before checking for updates, verify the `upstream` remote exists:
 
+```bash
+git remote -v | grep upstream
+```
+
+If not configured, **auto-configure it** — don't ask the user to do it manually:
 ```bash
 git remote add upstream https://github.com/jimbanach/copilot-cli-starter.git
 ```
 
-Verify with:
-```bash
-git remote -v
-# Should show both 'origin' (your fork) and 'upstream' (template source)
-```
+Confirm to the user: "Added upstream remote pointing to the template source."
 
 ## Workflow: Check for Template Updates
 
