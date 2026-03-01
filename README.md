@@ -9,7 +9,7 @@ Before getting started, make sure you have:
 - **Git** — [Install Git](https://git-scm.com/downloads)
 - **GitHub Copilot CLI** — [Install Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) (requires an active Copilot subscription)
 - **GitHub CLI (`gh`)** — [Install gh CLI](https://cli.github.com/) (used for authentication and repo management)
-- **PowerShell 6+** — [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) (required on Windows; pre-installed on most systems)
+- **PowerShell 6+** — [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) (Windows ships with PowerShell 5.1; version 6+ must be installed separately)
 - **Python 3.10+** — [Install Python](https://www.python.org/downloads/) (required for comparison and sync scripts)
 
 Optional:
