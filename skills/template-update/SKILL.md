@@ -84,7 +84,17 @@ What would you like to do?
    - If conflicts exist, show them and help resolve
    - Commit with a descriptive message
 
-7. After merging, re-run `init.ps1` to deploy any new content to `~/.copilot/`
+7. After a successful merge, **automatically deploy the changed files to `~/.copilot/`**. Do NOT require the user to manually re-run `init.ps1`. Instead:
+   - For each changed file from the merge, determine its local `~/.copilot/` destination:
+     - `personas/<name>/AGENTS.md` → `~/.copilot/personas/<name>/AGENTS.md`
+     - `skills/<name>/...` → `~/.copilot/skills/<name>/...`
+     - `agents/*.agent.md` → `~/.copilot/agents/*.agent.md`
+     - `scripts/*.ps1` → `~/.copilot/*.ps1`
+     - `base/copilot-instructions.md.template` → skip (requires variable resolution via init.ps1)
+     - `base/instance-rules/...` → skip (instance-specific, don't auto-deploy)
+   - Copy each changed file to its destination
+   - Show a summary of what was deployed
+   - If base template or instance rules changed, tell the user: "Base instructions or instance rules were updated — run `.\init.ps1` to apply those changes (they require variable resolution)."
 
 ## Handling Merge Conflicts
 
