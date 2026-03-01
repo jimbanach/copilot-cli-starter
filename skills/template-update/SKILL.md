@@ -1,11 +1,11 @@
 ---
 name: template-update
-description: Check for updates from the upstream copilot-cli-starter template. Use when asked to check for template updates, pull upstream changes, or see what's new from the template maintainer.
+description: Check for and pull updates from the upstream copilot-cli-starter repo. Use when asked to check for starter updates, pull starter updates, sync from starter, or see what's new from the copilot-cli-starter template source. Do NOT use for general template or workspace questions.
 ---
 
-# Template Update
+# Template Update — Pull from Upstream Starter
 
-Checks the upstream `copilot-cli-starter` template for new or updated content and lets you selectively incorporate changes into your local setup.
+Checks the upstream `copilot-cli-starter` repo for new or updated content and lets you selectively incorporate changes into your local setup. This skill is specifically for pulling updates from the **copilot-cli-starter** source repo — not for general template management.
 
 ## Prerequisites
 
