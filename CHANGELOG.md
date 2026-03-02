@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-02b] - Upstream sync: meeting agent cleanup
+### Changed
+- `meeting-transcript-processor.agent.md`: Now a standalone interactive agent (no longer requires orchestrator)
+### Removed
+- `meeting-notes-summarizer.agent.md`: Removed (unstable, under rework upstream)
+- `meeting-video-analyzer.agent.md`: Removed (unstable, under rework upstream)
+### Added
+- `.gitignore`: `_disabled/` pattern — agents placed in this local folder are excluded from sync
+
 ## [2026-03-02] - Upstream sync: project storage + backlog fixes
 ### Added
 - `New-CopilotProject.ps1`: `-GitHub` flag, cloud-sync detection, forwarding folder pattern
