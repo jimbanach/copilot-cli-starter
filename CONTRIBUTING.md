@@ -7,10 +7,38 @@ Thank you for improving this template! Your contributions help everyone who uses
 ### 1. Fork & Clone
 
 If you haven't already:
+
+<details>
+<summary><b>GitHub CLI</b></summary>
+
 ```powershell
 gh repo fork jimbanach/copilot-cli-starter --clone=true
 cd copilot-cli-starter
 ```
+</details>
+
+<details>
+<summary><b>VS Code</b></summary>
+
+1. Open the Command Palette (`Ctrl+Shift+P`)
+2. Run **Git: Clone**
+3. Paste: `https://github.com/jimbanach/copilot-cli-starter.git`
+4. Choose a local folder
+5. Fork via GitHub web first (see below), then update your remote
+
+</details>
+
+<details>
+<summary><b>GitHub Web</b></summary>
+
+1. Go to https://github.com/jimbanach/copilot-cli-starter
+2. Click **Fork** (top right)
+3. Clone your fork:
+   ```powershell
+   git clone https://github.com/YOUR_USERNAME/copilot-cli-starter.git
+   cd copilot-cli-starter
+   ```
+</details>
 
 ### 2. Make Your Improvement
 
@@ -31,19 +59,55 @@ Before submitting:
 
 ### 4. Commit with a Clear Message
 
+<details>
+<summary><b>GitHub CLI / Terminal</b></summary>
+
 ```powershell
 git add -A
 git commit -m "Add [what you changed] — [why]"
 git push origin main
 ```
+</details>
+
+<details>
+<summary><b>VS Code</b></summary>
+
+1. Open the **Source Control** panel (`Ctrl+Shift+G`)
+2. Stage your changes (click `+` next to each file)
+3. Type a commit message: `Add [what you changed] — [why]`
+4. Click **Commit**, then **Sync Changes**
+
+</details>
 
 ### 5. Submit a Pull Request
+
+<details>
+<summary><b>GitHub CLI</b></summary>
 
 ```powershell
 gh pr create --repo jimbanach/copilot-cli-starter --title "Your improvement title" --body "Description of what you changed and why"
 ```
+</details>
 
-Or create the PR on GitHub at: https://github.com/jimbanach/copilot-cli-starter/compare
+<details>
+<summary><b>VS Code</b></summary>
+
+1. Install the **GitHub Pull Requests** extension if not already
+2. Open the Command Palette (`Ctrl+Shift+P`)
+3. Run **GitHub Pull Requests: Create Pull Request**
+4. Fill in the title and description
+
+</details>
+
+<details>
+<summary><b>GitHub Web</b></summary>
+
+1. Go to your fork: `https://github.com/YOUR_USERNAME/copilot-cli-starter`
+2. Click **Contribute** → **Open pull request**
+3. Fill in the title and description
+4. Click **Create pull request**
+
+</details>
 
 ## What Makes a Good Contribution
 
