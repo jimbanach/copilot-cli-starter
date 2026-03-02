@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-02] - Phase 6: Documentation polish
+### Added
+- Starter prompts section (CLI setup, VS Code setup, updates, persona switching)
+
 ## [2026-03-01] - Phase 5c: Contribution workflow
 ### Added
 - CONTRIBUTING.md with fork, PR, and review process

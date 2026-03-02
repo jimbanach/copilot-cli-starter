@@ -172,6 +172,22 @@ git commit -m "Pull upstream updates"    # Accept, or git merge --abort to cance
 
 After pulling updates, re-run `.\init.ps1` to deploy new content to `~/.copilot/`.
 
+## Starter Prompts
+
+Copy-paste these into Copilot CLI to get started quickly:
+
+**First-time setup (CLI):**
+> I just forked and cloned copilot-cli-starter. Run `init.ps1` in this directory to set up my Copilot CLI workspace. Walk me through the setup and verify everything works.
+
+**First-time setup (VS Code):**
+> I just forked copilot-cli-starter and want to set up my VS Code Copilot workspace. Run `init.ps1` and make sure skills, agents, and MCP servers are configured for VS Code.
+
+**Check for updates:**
+> Check for starter updates
+
+**Switch persona:**
+> Switch to deep-technical
+
 ## Contributing
 
 Improvements are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to:
