@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-01] - Phase 5c: Contribution workflow
+### Added
+- CONTRIBUTING.md with fork, PR, and review process
+- README: Contributing section linking to CONTRIBUTING.md
+
 ## [2026-03-01] - Phase 5b: Upstream update support
 ### Added
 - `skills/template-update/SKILL.md` — skill for checking and pulling upstream template updates

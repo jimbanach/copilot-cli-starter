@@ -174,4 +174,7 @@ After pulling updates, re-run `.\init.ps1` to deploy new content to `~/.copilot/
 
 ## Contributing
 
-*Section added in Phase 5c*
+Improvements are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to:
+- Fork, make changes, and submit a PR
+- What makes a good contribution
+- The review process
