@@ -202,6 +202,60 @@ function Resolve-Template {
 
 Write-Banner "Copilot CLI Config — Initialization"
 
+# --- Prerequisites check ---
+Write-Step "Checking prerequisites..."
+$prereqFail = $false
+
+# Git
+$gitVersion = git --version 2>$null
+if ($gitVersion) { Write-Success "git: $gitVersion" }
+else { Write-Host "  ❌ git not found — install from https://git-scm.com/downloads" -ForegroundColor Red; $prereqFail = $true }
+
+# GitHub CLI
+$ghVersion = gh --version 2>$null | Select-Object -First 1
+if ($ghVersion) { Write-Success "gh: $ghVersion" }
+else { Write-Host "  ❌ gh CLI not found — install from https://cli.github.com/" -ForegroundColor Red; $prereqFail = $true }
+
+# Python
+$pyVersion = python --version 2>$null
+if ($pyVersion) { Write-Success "python: $pyVersion" }
+else { Write-Host "  ❌ python not found — install from https://www.python.org/downloads/" -ForegroundColor Red; $prereqFail = $true }
+
+# PowerShell version
+if ($PSVersionTable.PSVersion.Major -ge 6) { Write-Success "PowerShell: $($PSVersionTable.PSVersion)" }
+else { Write-Host "  ⚠️  PowerShell $($PSVersionTable.PSVersion) — version 6+ recommended. Install from https://learn.microsoft.com/powershell/scripting/install/installing-powershell" -ForegroundColor Yellow }
+
+# Node.js (optional — needed for MCP servers)
+$nodeVersion = node --version 2>$null
+if ($nodeVersion) { Write-Success "node: $nodeVersion" }
+else { Write-Host "  ⚠️  node.js not found (optional — needed for MCP servers like Playwright). Install from https://nodejs.org/" -ForegroundColor Yellow }
+
+if ($prereqFail) {
+    Write-Host ""
+    Write-Host "  Install the missing prerequisites above, then re-run init.ps1" -ForegroundColor Red
+    exit 1
+}
+
+# --- Step 0: Verify GitHub account ---
+Write-Step "Checking GitHub authentication..."
+$ghAccount = gh api user --jq '.login' 2>$null
+if ($ghAccount) {
+    Write-Host "  Active GitHub account: $ghAccount" -ForegroundColor White
+    $confirmAccount = Read-Host "  Is this the correct account for this setup? (Y/n, default: Y)"
+    if ($confirmAccount -match '^[Nn]') {
+        Write-Host ""
+        Write-Host "  Switch accounts with: gh auth switch" -ForegroundColor Yellow
+        Write-Host "  Or add a new account: gh auth login --web" -ForegroundColor Yellow
+        Write-Host "  Then re-run init.ps1" -ForegroundColor Yellow
+        exit 0
+    }
+} else {
+    Write-Host "  ⚠️  Not authenticated with GitHub CLI." -ForegroundColor Yellow
+    Write-Host "  Run: gh auth login --web" -ForegroundColor Yellow
+    Write-Host "  Then re-run init.ps1" -ForegroundColor Yellow
+    exit 1
+}
+
 # --- Step 1: Detect clients ---
 Write-Step "Detecting Copilot clients..."
 $clients = Detect-Clients
@@ -253,6 +307,7 @@ if (Test-Path $configPath) {
         $instanceName = $existingConfig.instance_name
         $displayName = $existingConfig.user_display_name
         $workspacePath = $existingConfig.workspace_path
+        $githubProjectsPath = if ($existingConfig.github_projects_path) { $existingConfig.github_projects_path } else { "$env:USERPROFILE\GitHubProjects" }
         $githubAccount = $existingConfig.github_account
         $environments = @($existingConfig.available_environments)
         $mcpProfile = $existingConfig.mcp_profile
@@ -292,6 +347,11 @@ if (-not $instanceName) {
     if (-not $envChoices) { $envChoices = $defEnv }
     $environments = @(($envChoices -split ',').Trim())
 
+    $defGhProjects = if ($existingConfig.github_projects_path) { $existingConfig.github_projects_path } else { "$env:USERPROFILE\GitHubProjects" }
+    $githubProjectsPath = Read-Host "  GitHub projects folder (default: $defGhProjects)"
+    if (-not $githubProjectsPath) { $githubProjectsPath = $defGhProjects }
+    $githubProjectsPath = $githubProjectsPath -replace '^~', $env:USERPROFILE
+
     $mcpProfile = if ($instanceName -eq "work") { "work" } else { "universal" }
 }
 
@@ -300,6 +360,7 @@ $instanceConfig = @{
     instance_name = $instanceName
     user_display_name = $displayName
     workspace_path = $workspacePath
+    github_projects_path = $githubProjectsPath
     github_account = $githubAccount
     available_environments = $environments
     mcp_profile = $mcpProfile
@@ -316,8 +377,11 @@ if ($DryRun) {
 }
 
 # --- Step 5: Backup existing setup ---
+$backupRoot = "$env:USERPROFILE\.copilot-backups"
+$maxBackups = 3
+
 if ((Test-Path $copilotDir) -and $Mode -eq "consume") {
-    $backupPath = "$env:USERPROFILE\.copilot-backup-$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
+    $backupPath = "$backupRoot\$(Get-Date -Format 'yyyy-MM-dd-HHmmss')"
     Write-Step "Existing ~/.copilot/ found — creating backup..."
     if ($DryRun) {
         Write-Info "[DRY RUN] Would backup to $backupPath"
@@ -330,6 +394,16 @@ if ((Test-Path $copilotDir) -and $Mode -eq "consume") {
             Copy-Item $_.FullName "$backupPath\copilot\$($_.Name)" -Recurse -Force
         }
         Write-Success "Backed up to $backupPath"
+
+        # Enforce retention — keep only the last N backups
+        $allBackups = Get-ChildItem $backupRoot -Directory | Sort-Object Name -Descending
+        if ($allBackups.Count -gt $maxBackups) {
+            $toDelete = $allBackups | Select-Object -Skip $maxBackups
+            foreach ($old in $toDelete) {
+                Remove-Item $old.FullName -Recurse -Force
+                Write-Info "Cleaned up old backup: $($old.Name)"
+            }
+        }
     }
 }
 
@@ -341,6 +415,7 @@ if ($Mode -eq "consume") {
     $templateVars = @{
         USER_NAME = $displayName
         WORKSPACE_PATH = $workspacePath
+        GITHUB_PROJECTS_PATH = $githubProjectsPath
         ENVIRONMENTS = "$displayName has $($environments -join ', ') available"
         PERSONA_LIST = ((Get-ChildItem "$repoRoot\personas" -Directory | Where-Object {
             Test-Path "$($_.FullName)\AGENTS.md"

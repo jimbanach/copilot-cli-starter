@@ -15,11 +15,14 @@ Manages bidirectional sync between the local `~/.copilot/` setup and the `copilo
 
 ## Finding the Repo
 
-1. Check if `instance-config.json` exists in any of these locations:
-   - `~/copilot-cli-config/instance-config.json`
-   - Scan parent directories from cwd for `instance-config.json`
-2. Read `repo_local_path` from the config
-3. If not found, ask the user for the repo path
+1. **First:** Check `~/.copilot/.copilot-sync/sync-state.json` for the `repo_path` field — this is the most reliable source since it's set by init.ps1
+2. **Fallback:** Search common locations for `instance-config.json`:
+   - `~/copilot-cli-config/`
+   - `~/GitHubProjects/copilot-cli-config/`
+   - Current working directory
+   - Scan parent directories from cwd
+3. Read `repo_local_path` from `instance-config.json`
+4. **If not found:** Ask the user for the repo path — do NOT assume a location
 
 ## Workflow 1: Check for Updates
 
@@ -116,7 +119,8 @@ Changes to push to 'work' branch:
 2. Check git status for uncommitted local repo changes
 3. Check for unpushed commits on the current branch
 4. Check for new commits on `origin/main` not yet pulled
-5. Present a dashboard:
+5. **Check the active gh CLI account** using `gh api user --jq '.login'` — display it in the dashboard and warn if it doesn't match the expected account from `instance-config.json`
+6. Present a dashboard:
 
 ```
 📊 Config Sync Status
@@ -124,6 +128,7 @@ Changes to push to 'work' branch:
 
 Instance:     work
 Branch:       work
+GitHub acct:  {{YOUR_NAME}}banach ✅
 Last pull:    2026-03-01 12:30 UTC
 Last push:    2026-03-01 10:15 UTC
 

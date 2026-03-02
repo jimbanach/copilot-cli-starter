@@ -34,11 +34,22 @@ param(
     [string]$Persona,
     [ValidateSet("native", "wsl", "docker", "")]
     [string]$Environment,
-    [switch]$GitInit
+    [switch]$GitInit,
+    [switch]$GitHub
 )
 
 $workspaceRoot = "$env:USERPROFILE\OneDrive - Microsoft\CopilotWorkspace"
+$githubRoot = "$env:USERPROFILE\GitHubProjects"
 $personaRoot = "$env:USERPROFILE\.copilot\personas"
+
+# Check instance-config for custom paths
+$instanceConfig = "$env:USERPROFILE\copilot-cli-config\instance-config.json"
+if (-not (Test-Path $instanceConfig)) { $instanceConfig = "$env:USERPROFILE\GitHubProjects\copilot-cli-config\instance-config.json" }
+if (Test-Path $instanceConfig) {
+    $config = Get-Content $instanceConfig -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+    if ($config.workspace_path) { $workspaceRoot = $config.workspace_path }
+    if ($config.github_projects_path) { $githubRoot = $config.github_projects_path }
+}
 
 # Ensure workspace exists
 if (-not (Test-Path $workspaceRoot)) {
@@ -116,6 +127,54 @@ if (-not $Environment) {
     }
 }
 
+# --- GitHub-backed project handling ---
+if (-not $GitHub) {
+    Write-Host ""
+    Write-Host "  Will this project be backed by a GitHub repository?" -ForegroundColor Cyan
+    $ghChoice = Read-Host "  GitHub-backed? (y/N, default: N)"
+    if ($ghChoice -match '^[Yy]') { $GitHub = $true }
+}
+
+if ($GitHub) {
+    # GitHub projects go to GitHubProjects folder, not OneDrive
+    New-Item -ItemType Directory -Path $githubRoot -Force | Out-Null
+    $projectPath = Join-Path $githubRoot $Name
+
+    if (Test-Path $projectPath) {
+        Write-Host "  Project '$Name' already exists at $projectPath" -ForegroundColor Yellow
+        exit 1
+    }
+
+    Write-Host ""
+    Write-Host "  ℹ️  GitHub-backed projects are stored in: $githubRoot" -ForegroundColor Cyan
+    Write-Host "  A shortcut will be created in CopilotWorkspace for easy access." -ForegroundColor DarkGray
+} else {
+    $projectPath = Join-Path $workspaceRoot $Name
+
+    if (Test-Path $projectPath) {
+        Write-Host "  Project '$Name' already exists at $projectPath" -ForegroundColor Yellow
+        exit 1
+    }
+
+    # Warn if user somehow specified a cloud-sync path with GitInit
+    if ($GitInit) {
+        $cloudSyncPatterns = @('OneDrive', 'Dropbox', 'Google Drive', 'iCloud')
+        foreach ($pattern in $cloudSyncPatterns) {
+            if ($projectPath -match [regex]::Escape($pattern)) {
+                Write-Host ""
+                Write-Host "  ⚠️  WARNING: You're creating a git repo inside a cloud-sync folder ($pattern)." -ForegroundColor Red
+                Write-Host "  This can cause sync conflicts. Consider using -GitHub flag instead." -ForegroundColor Red
+                $proceed = Read-Host "  Continue anyway? (y/N, default: N)"
+                if ($proceed -notmatch '^[Yy]') {
+                    Write-Host "  Cancelled. Re-run with -GitHub flag." -ForegroundColor Yellow
+                    exit 0
+                }
+                break
+            }
+        }
+    }
+}
+
 # Create project structure
 Write-Host ""
 Write-Host "  Creating project..." -ForegroundColor Cyan
@@ -168,6 +227,8 @@ This project uses the **$Persona** persona.
         status = "active"
         created = (Get-Date -Format "yyyy-MM-dd")
         tags = @()
+        github_backed = $GitHub.IsPresent
+        storage_path = $projectPath
     } | ConvertTo-Json -Depth 3
     Set-Content -Path "$projectPath\project.json" -Value $projectMeta
 
@@ -184,11 +245,67 @@ COPY . .
         Set-Content -Path "$projectPath\Dockerfile" -Value $dockerfile
     }
 
-    # Git init if requested
-    if ($GitInit) {
+    # Git init for GitHub projects (always) or if requested
+    if ($GitHub -or $GitInit) {
         Push-Location $projectPath
         git init --quiet
         Pop-Location
+    }
+
+    # Create forwarding folder in CopilotWorkspace for GitHub-backed projects
+    if ($GitHub) {
+        $forwardingPath = Join-Path $workspaceRoot $Name
+        New-Item -ItemType Directory -Path "$forwardingPath\.github" -Force | Out-Null
+
+        # Forwarding project.json
+        $fwdMeta = @{
+            name = $Name
+            description = $Description
+            github_backed = $true
+            moved_to = $projectPath
+            status = "active"
+            note = "This project lives in $projectPath. This folder is a forwarding reference."
+        } | ConvertTo-Json -Depth 3
+        Set-Content -Path "$forwardingPath\project.json" -Value $fwdMeta
+
+        # MOVED-TO-GITHUB.md
+        $movedMd = @"
+# $Name — Moved to GitHub
+
+This project is backed by a GitHub repository and has been moved to:
+
+**$projectPath**
+
+## Why?
+Git repositories should not live inside cloud-sync folders (like OneDrive) because it causes sync conflicts and unreliable state. GitHub-backed projects are stored in the dedicated GitHub folder.
+
+## How to access
+- **File Explorer:** Use the shortcut ``$Name.lnk`` in this folder
+- **Terminal:** ``cd $projectPath``
+- **Copilot CLI:** Copilot will automatically redirect to the correct location
+"@
+        Set-Content -Path "$forwardingPath\MOVED-TO-GITHUB.md" -Value $movedMd
+
+        # Forwarding copilot-instructions.md
+        $fwdInstructions = @"
+# Project: $Name (Forwarding Reference)
+
+**This project has moved to ``$projectPath``.**
+
+Do NOT work in this folder. Automatically ``cd`` to the actual project location before proceeding:
+``cd $projectPath``
+"@
+        Set-Content -Path "$forwardingPath\.github\copilot-instructions.md" -Value $fwdInstructions
+
+        # .lnk shortcut for File Explorer
+        $shortcutPath = Join-Path $forwardingPath "$Name.lnk"
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $projectPath
+        $shortcut.Description = "$Name (GitHub-backed — stored in $githubRoot)"
+        $shortcut.Save()
+
+        Write-Host "  📁 Forwarding folder created in CopilotWorkspace" -ForegroundColor DarkGray
     }
 }
 
@@ -199,9 +316,17 @@ Write-Host ""
 Write-Host "  📁 Location:    $projectPath" -ForegroundColor DarkGray
 Write-Host "  🎭 Persona:     $Persona" -ForegroundColor DarkGray
 Write-Host "  🖥  Environment: $Environment" -ForegroundColor DarkGray
+if ($GitHub) {
+    Write-Host "  🔗 GitHub:      Yes (stored in $githubRoot)" -ForegroundColor DarkGray
+    Write-Host "  📁 Forwarding:  $workspaceRoot\$Name\" -ForegroundColor DarkGray
+}
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan
 Write-Host "  • cd to the project folder and start Copilot CLI"
 Write-Host "  • Edit .github\copilot-instructions.md to add project context"
+if ($GitHub) {
+    Write-Host "  • Create a GitHub repo: gh repo create $Name --private"
+    Write-Host "  • Push initial commit: git add -A && git commit -m 'Initial project' && git push -u origin main"
+}
 Write-Host "  • Use /skills list to see available skills"
 Write-Host ""

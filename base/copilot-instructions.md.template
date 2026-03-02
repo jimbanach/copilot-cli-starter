@@ -18,6 +18,18 @@ These instructions apply to all personas and sessions. They define workspace str
 - If they mention starting something new, suggest creating a project with `New-CopilotProject.ps1`
 - When {{USER_NAME}} confirms they're working in a specific project, then read its `.github/copilot-instructions.md` and `project.json` for context
 
+### Project Storage Rules
+- **Local-only projects** (not backed by GitHub) live in `{{WORKSPACE_PATH}}` (cloud-synced)
+- **GitHub-backed projects** MUST live in the dedicated GitHub folder (`{{GITHUB_PROJECTS_PATH}}`), NOT in a cloud-sync folder — git repos inside cloud-sync folders cause conflicts and unreliable state
+- When a local project transitions to GitHub-backed, move the project folder to `{{GITHUB_PROJECTS_PATH}}` and create a **forwarding folder** in `{{WORKSPACE_PATH}}` containing:
+  - `project.json` with `github_backed: true` and `moved_to: "<path>"` — so Copilot knows the real location
+  - `MOVED-TO-GITHUB.md` — human-readable notice explaining the move
+  - `.lnk` shortcut — for File Explorer navigation
+  - `.github/copilot-instructions.md` updated with "This project has moved" notice
+- **When you encounter a project with `MOVED-TO-GITHUB.md` or a `project.json` with `github_backed: true` and `moved_to` set, automatically `cd` to the actual project location before proceeding. Do NOT work in the forwarding folder.**
+- When creating a new project with `New-CopilotProject.ps1 -GitHub`, the script creates the project in `{{GITHUB_PROJECTS_PATH}}` and the forwarding folder in `{{WORKSPACE_PATH}}` automatically
+- If you see a `.git` directory inside a OneDrive/cloud-sync path, flag it to the user as a potential issue
+
 ### Available Skills
 These skills are auto-loaded when relevant, or can be invoked with `/skill-name`:
 - **meeting-prep** — Prep agendas, talking points, and materials for upcoming meetings

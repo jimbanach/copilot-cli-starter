@@ -82,18 +82,34 @@ if (Test-Path $baseFile) {
     }
 }
 
-# Check current persona by comparing active AGENTS.md
+# Check current persona by comparing active AGENTS.md (line-by-line for CRLF tolerance)
 $currentPersona = $null
 if (Test-Path $activeFile) {
-    $activeContent = Get-Content $activeFile -Raw -ErrorAction SilentlyContinue
+    $activeLines = @(Get-Content $activeFile -ErrorAction SilentlyContinue)
+    $bestMatch = $null
+    $bestDiffCount = [int]::MaxValue
+
     foreach ($p in $personas) {
         $pFile = "$personaRoot\$p\AGENTS.md"
         if (-not (Test-Path $pFile)) { $pFile = "$personaRoot\$p\copilot-instructions.md" }
-        $pContent = Get-Content $pFile -Raw -ErrorAction SilentlyContinue
-        if ($activeContent -eq $pContent) {
+        if (-not (Test-Path $pFile)) { continue }
+        $pLines = @(Get-Content $pFile -ErrorAction SilentlyContinue)
+        $diff = Compare-Object $activeLines $pLines -ErrorAction SilentlyContinue
+        $diffCount = if ($diff) { $diff.Count } else { 0 }
+
+        if ($diffCount -eq 0) {
+            # Exact match
             $currentPersona = $p
             break
+        } elseif ($diffCount -lt $bestDiffCount) {
+            $bestMatch = $p
+            $bestDiffCount = $diffCount
         }
+    }
+
+    # If no exact match but a close match exists, use it (persona was edited)
+    if (-not $currentPersona -and $bestMatch -and $bestDiffCount -lt 20) {
+        $currentPersona = $bestMatch
     }
 }
 
@@ -166,6 +182,27 @@ switch ($Target) {
         $deployCli = Test-Path "$HOME\.copilot\config.json"
         $deployVscode = Test-Path "$env:APPDATA\Code\User\settings.json"
         if (-not $deployCli -and -not $deployVscode) { $deployCli = $true }
+    }
+}
+
+# Check for unsaved edits to the current active persona before switching
+if ($currentPersona -and (Test-Path $activeFile)) {
+    $currentSourceFile = "$personaRoot\$currentPersona\AGENTS.md"
+    if (Test-Path $currentSourceFile) {
+        $activeLines = @(Get-Content $activeFile)
+        $sourceLines = @(Get-Content $currentSourceFile)
+        $diff = Compare-Object $sourceLines $activeLines -ErrorAction SilentlyContinue
+        if ($diff.Count -gt 0) {
+            Write-Host ""
+            Write-Host "  ⚠️  Active persona '$currentPersona' has unsaved edits." -ForegroundColor Yellow
+            $save = Read-Host "  Save changes back to $currentPersona before switching? (Y/n, default: Y)"
+            if ($save -eq "" -or $save -match '^[Yy]') {
+                Copy-Item $activeFile $currentSourceFile -Force
+                Write-Host "  ✅ Saved edits to $currentPersona" -ForegroundColor Green
+            } else {
+                Write-Host "  ⏭️  Edits discarded" -ForegroundColor DarkGray
+            }
+        }
     }
 }
 

@@ -1,196 +1,330 @@
-# Copilot CLI Starter
+# Copilot CLI Config
 
-A ready-to-use Copilot CLI (and VS Code) workspace template with personas, skills, agents, and an interactive setup wizard.
-
-## Prerequisites
-
-Before getting started, make sure you have:
-
-- **Git** — [Install Git](https://git-scm.com/downloads)
-- **GitHub Copilot CLI** — [Install Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli) (requires an active Copilot subscription)
-- **GitHub CLI (`gh`)** — [Install gh CLI](https://cli.github.com/) (used for authentication and repo management)
-- **PowerShell 6+** — [Install PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) (Windows ships with PowerShell 5.1; version 6+ must be installed separately)
-- **Python 3.10+** — [Install Python](https://www.python.org/downloads/) (required for comparison and sync scripts)
-- **Node.js 18+** — [Install Node.js](https://nodejs.org/) (required for MCP servers like Playwright; provides `npx`)
-
-Optional:
-- **VS Code** with GitHub Copilot extension — if you prefer IDE-based Copilot over CLI
-- **WSL** or **Docker** — for isolated development environments
-
-## Quick Start
-
-1. **Fork** this repo to your own GitHub account
-2. **Clone** your fork locally:
-   ```powershell
-   git clone https://github.com/YOUR_USERNAME/copilot-cli-starter.git ~/copilot-cli-starter
-   ```
-3. **Run the setup wizard:**
-   ```powershell
-   cd ~/copilot-cli-starter
-   .\init.ps1
-   ```
-4. **Launch Copilot CLI** in a new terminal:
-   ```powershell
-   copilot
-   ```
-5. **Verify** — run `/instructions` to see all 3 layers loaded
+Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync.
 
 ## Quick Links
 
 - [CHANGELOG](./CHANGELOG.md)
+- [Implementation Plan](./PLAN.md)
 
-## What's Included
+## Account Setup
 
-### 7 Personas
-Role-specific AI assistants you can switch between:
+This repo is hosted under `{{YOUR_NAME}}banach` (regular GitHub account, not enterprise-managed). Both work and personal machines access it through this account.
 
-| Persona | Description |
-|---------|-------------|
-| `productivity` | Daily productivity — calendar, email, tasks, time management |
-| `deep-technical` | Expert Microsoft solutions engineer — implementation & troubleshooting |
-| `security-architect` | Security technical architect — positioning & enablement |
-| `marketing` | Marketing strategist — messaging, campaigns, competitive positioning |
-| `program-manager` | Program management — planning, tracking, stakeholder management |
-| `architect-marketer` | Blends technical depth with GTM & program management |
-| `hypervelocity-engineer` | HVE practitioner — AI-native, outcome-focused rapid delivery |
+| Machine | gh CLI account | Role |
+|---------|---------------|------|
+| **Work machine** | `{{YOUR_NAME}}banach` | Push to `work` branch, merge to `main` |
+| **Personal laptop** | `jrbanach` (collaborator) | Push to `personal` branch, merge to `main` |
 
-Switch personas in any of these ways:
-- **In conversation:** Just say "switch to productivity" or "change persona to deep-technical"
-- **Via the switch-persona skill:** Copilot auto-detects when you want to switch
-- **Via script:** `~/.copilot/Switch-CopilotPersona.ps1 -Persona productivity`
-- **List all:** `~/.copilot/Switch-CopilotPersona.ps1 -List`
+### Switching Accounts
 
-<!-- CUSTOMIZE: These personas are examples. Edit any AGENTS.md to match your role, or create new ones by adding a directory under personas/ with an AGENTS.md file. -->
+```powershell
+# Check which account is active
+gh auth status
 
-### 16+ Skills
-Portable capabilities that auto-load when relevant (works in both CLI and VS Code):
-- Meeting prep, email triage, content drafting, research, project status
-- KQL queries, PDF/DOCX/PPTX/XLSX manipulation
-- Environment advisor, skill creator, and more
+# Switch between accounts
+gh auth switch
 
-### Custom Agents
-Specialized agents for complex workflows:
-- Meeting notes summarizer, transcript processor, video analyzer, slide architect
-- See `agents/` for the full list — add your own by creating `.agent.md` files
+# Add a new account
+gh auth login --web
+```
 
-### 3-Layer Instruction Model
+The `init.ps1` script verifies your active account before proceeding. If the wrong account is active, it tells you how to switch.
+
+## Architecture: 3-Layer Instruction Model
+
+Copilot CLI natively loads instructions from multiple locations. This setup uses three layers that load simultaneously on every session:
 
 ```mermaid
 graph TD
-    L1["Layer 1: Base\nWorkspace, skills, behaviors"]
-    L2["Layer 2: Instance Rules\nMachine-specific (work/personal)"]
-    L3["Layer 3: Active Persona\nRole-specific tone & focus"]
-    OUT["Complete instruction set"]
+    L1["🟦 Layer 1: Base\ncopilot-instructions.md\nWorkspace, skills, behaviors"]
+    L2["🟨 Layer 2: Instance Rules\ninstance.instructions.md\nMachine-specific (work/personal)"]
+    L3["🟩 Layer 3: Active Persona\nAGENTS.md\nRole-specific tone & focus"]
+    OUT["Complete instruction set\nfor Copilot CLI"]
 
     L1 --> OUT
     L2 --> OUT
     L3 --> OUT
 ```
 
-## Customization Guide
+### Layer Reference
 
-### Create a New Persona
+| Layer | Purpose | File Path | When to Edit |
+|-------|---------|-----------|-------------|
+| **1. Base** | Workspace structure, skills catalog, persona list, general behaviors | `~/.copilot/copilot-instructions.md` | When adding new skills, changing workspace structure, or updating universal behaviors |
+| **2. Instance** | Machine-specific rules (work: confidentiality, paths; personal: personal rules) | `~/.copilot/personas/active/.github/instructions/instance.instructions.md` | Rarely — only when instance rules change |
+| **3. Persona** | Role-specific tone, behaviors, domain expertise | `~/.copilot/personas/active/AGENTS.md` | Never edit directly — use `Switch-CopilotPersona.ps1` |
 
-1. Create a directory under `~/.copilot/personas/` with your persona name:
-   ```powershell
-   mkdir ~/.copilot/personas/my-role
-   ```
-2. Create an `AGENTS.md` file with your role definition:
-   ```markdown
-   # Persona: My Custom Role
+### How Layers Are Loaded
 
-   You are a [description of expertise and approach].
+- **Layer 1:** Copilot CLI always loads `~/.copilot/copilot-instructions.md` as the user-level instruction file
+- **Layers 2 & 3:** The environment variable `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` points to `~/.copilot/personas/active/`. Copilot CLI finds:
+  - `AGENTS.md` → Layer 3 (persona)
+  - `.github/instructions/instance.instructions.md` → Layer 2 (instance rules)
 
-   ## Tone & Style
-   - [how you want Copilot to communicate]
+### How to Edit Each Layer
 
-   ## Core Focus Areas
-   - [domain expertise areas]
-
-   ## Behaviors
-   - [specific behavioral rules]
-   ```
-3. The switch script will auto-detect it on next run:
-   ```powershell
-   ~/.copilot/Switch-CopilotPersona.ps1 -List
-   ```
-   Or just tell Copilot: "switch to my-role"
-
-### Edit Instance Rules (Layer 2)
-
-Edit `~/.copilot/personas/active/.github/instructions/instance.instructions.md` to change machine-specific rules.
-
-### Add a New Skill
-
-See the [Agent Skills standard](https://agentskills.io) or copy an existing skill directory as a template.
-
-## CLI vs VS Code
-
-Both are supported! The init script auto-detects which you have and deploys accordingly. Skills, personas, and agents use the same format in both environments.
-
-## Known Limitations
-
-- **WSL is untested** — this setup is built and tested on Windows with PowerShell. WSL may work but has not been validated yet.
-- **Native Linux is untested** — see the sync repo for tracking on Linux support
-- **VS Code MCP config** is deployed separately and not auto-synced with CLI MCP
-- Known issues from the upstream config repo may not always be reflected here — check with the repo maintainer for the latest
-
-## Pulling Updates
-
-When the template maintainer publishes improvements, you can pull them into your fork.
-
-### First Time Setup
-
-The first update must be done manually (the update skill doesn't exist on your machine yet):
-
+**Layer 1 — Base instructions:**
 ```powershell
-cd ~/copilot-cli-starter
-git remote add upstream https://github.com/jimbanach/copilot-cli-starter.git
-git fetch upstream
-git merge upstream/main
-.\init.ps1    # re-deploy to install new skills
+# Edit directly
+code ~/.copilot/copilot-instructions.md
+# Changes take effect on next Copilot CLI session
 ```
 
-### After First Update — Use Copilot
-
-Once the `template-update` skill is installed, just ask Copilot:
-
-> **"Check for starter updates"** or **"Pull starter updates"**
-
-The skill auto-finds your repo, checks upstream, and lets you review and selectively incorporate changes.
-
-### Manual Alternative
-
+**Layer 2 — Instance rules:**
 ```powershell
-cd ~/copilot-cli-starter
-git fetch upstream
-git log HEAD..upstream/main --oneline    # See what's new
-git merge upstream/main --no-commit      # Preview merge
-git diff --staged                        # Review changes
-git commit -m "Pull upstream updates"    # Accept, or git merge --abort to cancel
+# Edit directly (rarely needed)
+code ~/.copilot/personas/active/.github/instructions/instance.instructions.md
+# Changes take effect on next Copilot CLI session
 ```
 
-After pulling updates, re-run `.\init.ps1` to deploy new content to `~/.copilot/`.
+**Layer 3 — Persona (use the switch script, don't edit directly):**
+```powershell
+# Switch persona
+~/.copilot/Switch-CopilotPersona.ps1 -Persona productivity
+
+# List available personas
+~/.copilot/Switch-CopilotPersona.ps1 -List
+
+# To edit a persona's content, edit the library copy:
+code ~/.copilot/personas/productivity/AGENTS.md
+# Then switch to it again to deploy
+```
+
+## Persona Switching
+
+The `Switch-CopilotPersona.ps1` script manages Layer 3. It:
+- Copies the selected persona's `AGENTS.md` into `personas/active/AGENTS.md`
+- **Never touches Layers 1 or 2**
+- Auto-detects new personas: if you add a new persona directory, the script automatically adds it to the Layer 1 persona list
+- Supports `-Target` parameter: `cli`, `vscode`, `all`, or `auto` (default)
+
+### Available Personas
+
+| Persona | Description |
+|---------|-------------|
+| `productivity` | Daily productivity assistant — calendar, email, tasks, time management |
+| `deep-technical` | Expert Microsoft solutions engineer — hands-on implementation and troubleshooting |
+| `security-architect` | Security partner marketing technical architect — positioning and enablement |
+| `marketing` | Marketing strategist — messaging, campaigns, content, competitive positioning |
+| `program-manager` | Program management partner — planning, tracking, stakeholder management |
+| `architect-marketer` | PAC strategist — blends technical depth with GTM and program management |
+| `hypervelocity-engineer` | HVE practitioner — AI-native, outcome-focused rapid delivery methodology |
+
+## Repo Structure
+
+```
+copilot-cli-config/
+├── README.md
+├── CHANGELOG.md
+├── PLAN.md                                # Implementation plan
+├── instance-config.template.json          # Per-instance config schema
+│
+├── base/
+│   ├── copilot-instructions.md.template   # Layer 1 template with {{variables}}
+│   └── instance-rules/
+│       ├── work.instructions.md           # Layer 2: work machine rules
+│       └── personal.instructions.md       # Layer 2: personal machine rules
+│
+├── personas/                              # Layer 3: one AGENTS.md per persona
+│   ├── productivity/AGENTS.md
+│   ├── deep-technical/AGENTS.md
+│   └── ...                                # See Available Personas table above
+│
+├── skills/                                # Portable skills (CLI + VS Code)
+│   ├── humanizer/                         # Each skill: SKILL.md + scripts/ + references/
+│   ├── kql-queries/
+│   └── ...                                # 16+ skills total
+│
+├── agents/                                # Custom agent profiles (.agent.md)
+│   ├── meeting-notes-summarizer.agent.md
+│   └── ...                                # + scripts/
+│
+├── scripts/                               # Utility scripts
+│   ├── New-CopilotProject.ps1
+│   └── Switch-CopilotPersona.ps1
+│
+└── mcp/                                   # MCP server configs
+    ├── mcp-config.universal.json          # CLI: Playwright + MS Docs
+    ├── mcp-config.work.json               # CLI: + WorkIQ
+    └── mcp.vscode.universal.json          # VS Code format
+```
+
+### Branch Strategy
+
+| Branch | Purpose | Who pushes |
+|--------|---------|------------|
+| `main` | Universal baseline — shared across all instances | Either machine, after review |
+| `work` | Work-specific additions and overrides | Work machine only |
+| `personal` | Personal-specific additions and overrides | Personal laptop only |
+
+### What's NOT in the Repo
+
+| Item | Reason |
+|------|--------|
+| `config.json` | GitHub login, model preferences — instance-specific |
+| `permissions-config.json` | Local filesystem paths |
+| `session-state/`, `session-store.db` | Runtime/chat history |
+| `logs/`, `ide/`, `pkg/` | Runtime data |
+| `CopilotWorkspace/` projects | Company-confidential project data |
+| `__pycache__/`, `*.pyc` | Python bytecode |
+
+## Init Script
+
+The `init.ps1` script deploys the full Copilot CLI environment from this repo to a local machine.
+
+### Usage
+
+```powershell
+# Auto-detect mode (seed if repo empty, consume if repo has content)
+.\init.ps1
+
+# Deploy from repo to local (new machine setup)
+.\init.ps1 -Mode consume
+
+# Preview without making changes
+.\init.ps1 -DryRun
+```
+
+### What It Does
+
+```mermaid
+graph TD
+    A["Detect Clients\n(CLI / VS Code / both)"] --> B["Prompt for\ninstance details"]
+    B --> C{"Existing\n~/.copilot/?"}
+    C -->|Yes| D["Create timestamped\nbackup"]
+    C -->|No| E["Continue"]
+    D --> E
+    E --> F["Deploy Layer 1\n(resolve base template)"]
+    F --> G["Deploy Layer 2\n(instance rules)"]
+    G --> H["Interactive Import\n(personas, skills, agents, scripts)"]
+    H --> I["Deploy MCP config\n(CLI + VS Code)"]
+    I --> J["Set env var +\nVS Code settings"]
+    J --> K["Set default persona"]
+    K --> L["Summary + next steps"]
+```
+
+### Interactive Import
+
+For each category (personas, skills, agents, scripts), you choose:
+- **Import All** — accept all new and changed items
+- **Skip All** — keep local versions
+- **Review Each** — step through items one at a time (Import / Skip / Compare)
+
+### CLI vs VS Code Deployment
+
+| Component | CLI | VS Code |
+|-----------|-----|---------|
+| Layer 1 (base) | `~/.copilot/copilot-instructions.md` | Same |
+| Layer 2 (instance) | `~/.copilot/personas/active/.github/instructions/` | Same |
+| Layer 3 (persona) | `~/.copilot/personas/active/AGENTS.md` | Same |
+| Skills | `~/.copilot/skills/` | Same + `chat.agentSkillsLocations` setting |
+| MCP | `~/.copilot/mcp-config.json` | `%APPDATA%/Code/User/mcp.json` |
+| Env var | `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` | Same |
+
+## Config-Sync Workflows
+
+The `config-sync` skill manages bidirectional sync between your local `~/.copilot/` and this repo. Just ask Copilot naturally:
+
+| What you say | What happens |
+|-------------|-------------|
+| "Check for updates" | Fetches latest from repo, shows what's new/changed/local-only |
+| "Share my setup" | Detects local changes, flags instance-specific content, pushes to your branch |
+| "Promote to main" | Moves changes from your instance branch to `main` for cross-machine sharing |
+| "Sync status" | Dashboard: last pull/push, pending changes, skipped items |
+| "Publish template" | Sanitizes and pushes to `copilot-cli-starter` for peers |
+
+### How It Works
+
+```mermaid
+graph LR
+    LOCAL["~/.copilot/\n(local setup)"]
+    REPO["copilot-cli-config\n(this repo)"]
+    TEMPLATE["copilot-cli-starter\n(peer template)"]
+
+    LOCAL -- "check for updates" --> REPO
+    LOCAL -- "share my setup" --> REPO
+    REPO -- "publish template" --> TEMPLATE
+
+    style LOCAL fill:#d1fae5,stroke:#059669
+    style REPO fill:#dbeafe,stroke:#2563eb
+    style TEMPLATE fill:#fef3c7,stroke:#d97706
+```
+
+### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `compare.py` | Diffs local vs repo with line-ending tolerance |
+| `sync_state.py` | Tracks pull/push history, skipped items |
+| `sanitize.py` | Replaces names/paths with `{{variables}}` for peer template |
+
+### Known Limitations
+
+- VS Code MCP config (`%APPDATA%/Code/User/mcp.json`) is not tracked by config-sync — see [#26](../../issues/26)
+- Native Linux is untested — see [#19](../../issues/19)
+
+## Reviewing Peer PRs
+
+When a peer submits a PR to `copilot-cli-starter`:
+
+### 1. Review the PR
+```powershell
+gh pr list --repo {{YOUR_NAME}}banach/copilot-cli-starter
+gh pr diff <PR_NUMBER> --repo {{YOUR_NAME}}banach/copilot-cli-starter
+```
+
+### 2. Check for Issues
+- Does the change stay generic (no personal/role-specific content)?
+- Does it break init.ps1 or existing skills/personas?
+- Is the commit message clear?
+
+### 3. Merge or Request Changes
+```powershell
+# Approve and merge
+gh pr merge <PR_NUMBER> --repo {{YOUR_NAME}}banach/copilot-cli-starter --merge
+
+# Or request changes
+gh pr review <PR_NUMBER> --repo {{YOUR_NAME}}banach/copilot-cli-starter --request-changes --body "Feedback here"
+```
+
+### 4. Optionally Pull Up to Your Sync Repo
+If the improvement is valuable for your own setup:
+```powershell
+cd ~/copilot-cli-config
+# Cherry-pick or manually apply the change
+# Commit to work branch, then promote to main
+```
+
+## How To
+
+Quick reference for common operations:
+
+| Task | Command / Action |
+|------|-----------------|
+| **Switch persona** | Say "switch to productivity" or run `Switch-CopilotPersona.ps1 -Persona productivity` |
+| **List personas** | `Switch-CopilotPersona.ps1 -List` |
+| **Check for sync updates** | Say "check for updates" in Copilot CLI |
+| **Share local changes** | Say "share my setup" in Copilot CLI |
+| **View sync status** | Say "what's my sync status?" in Copilot CLI |
+| **Promote to main** | Say "promote to main" in Copilot CLI |
+| **Publish to peer template** | Say "publish template for peers" in Copilot CLI |
+| **Create a new project** | Run `New-CopilotProject.ps1` |
+| **Deploy from repo to local** | Run `init.ps1 -Mode consume` |
+| **Preview without changes** | Run `init.ps1 -DryRun` |
+| **Restore from backup** | See `~/.copilot-backups/` and RESTORE.md |
+| **Add a new persona** | Create `~/.copilot/personas/<name>/AGENTS.md` — auto-detected on next switch |
+| **Edit instance rules** | Edit `~/.copilot/personas/active/.github/instructions/instance.instructions.md` |
+| **Review a peer PR** | `gh pr list --repo {{YOUR_NAME}}banach/copilot-cli-starter` then `gh pr diff <N>` |
 
 ## Starter Prompts
 
-Copy-paste these into Copilot CLI to get started quickly:
+### Restore My Setup on a New Machine
 
-**First-time setup (CLI):**
-> I just forked and cloned copilot-cli-starter. Run `init.ps1` in this directory to set up my Copilot CLI workspace. Walk me through the setup and verify everything works.
+Copy this into Copilot CLI on a fresh machine:
 
-**First-time setup (VS Code):**
-> I just forked copilot-cli-starter and want to set up my VS Code Copilot workspace. Run `init.ps1` and make sure skills, agents, and MCP servers are configured for VS Code.
+> I need to restore my Copilot CLI environment from my config repo. Clone `{{YOUR_NAME}}banach/copilot-cli-config` to `~/copilot-cli-config`, checkout the work branch, and run `init.ps1`. When prompted, configure this as my work (or personal) instance. After setup, verify by running `Switch-CopilotPersona.ps1 -List`.
 
-**Check for updates:**
-> Check for starter updates
+### Quick Sync Check
 
-**Switch persona:**
-> Switch to deep-technical
-
-## Contributing
-
-Improvements are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to:
-- Fork, make changes, and submit a PR
-- What makes a good contribution
-- The review process
+> Check my Copilot CLI config sync status. Are there updates in the repo I haven't incorporated? Have I made local changes that haven't been pushed?
