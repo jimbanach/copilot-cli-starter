@@ -17,10 +17,30 @@ $copilotDir = "$env:USERPROFILE\.copilot"
 
 # Find the copilot-cli-starter repo
 $repoRoot = $null
-if ((Get-Item .).Name -eq 'copilot-cli-starter' -and (Test-Path '.git')) {
+
+# Check cwd first
+if ((Test-Path '.git') -and (Test-Path 'init.ps1') -and (Test-Path 'personas')) {
     $repoRoot = (Get-Location).Path
-} else {
-    foreach ($path in @("$env:USERPROFILE\copilot-cli-starter", "$env:USERPROFILE\CopilotWorkspace\copilot-cli-starter")) {
+}
+
+# Check sync-state for saved path
+if (-not $repoRoot) {
+    $stateFile = "$env:USERPROFILE\.copilot\.copilot-sync\sync-state.json"
+    if (Test-Path $stateFile) {
+        $state = Get-Content $stateFile -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+        if ($state.repo_path -and (Test-Path "$($state.repo_path)\.git")) {
+            $repoRoot = $state.repo_path
+        }
+    }
+}
+
+# Search common locations
+if (-not $repoRoot) {
+    foreach ($path in @(
+        "$env:USERPROFILE\copilot-cli-starter",
+        "$env:USERPROFILE\GitHubProjects\copilot-cli-starter",
+        "$env:USERPROFILE\CopilotWorkspace\copilot-cli-starter"
+    )) {
         if (Test-Path "$path\.git") {
             $repoRoot = $path
             break

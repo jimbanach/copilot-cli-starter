@@ -16,10 +16,13 @@ Checks the upstream `copilot-cli-starter` repo for new or updated content and le
 
 ## Finding the Repo
 
-1. Check if `cwd` is inside a git repo that has `init.ps1` and `personas/` directory
-2. If not, search common locations: `~/copilot-cli-starter`, `~/GitHubProjects/copilot-cli-starter`
-3. If not found, ask the user for the repo path
-4. `cd` to the repo before proceeding
+1. **First:** Check `~/.copilot/.copilot-sync/sync-state.json` for a `repo_path` field
+2. **Then:** Check if `cwd` is inside a git repo that has `init.ps1` and `personas/` directory
+3. **Fallback:** Search common locations:
+   - `~/copilot-cli-starter`
+   - `~/GitHubProjects/copilot-cli-starter`
+4. **If not found:** Ask the user for the repo path — do NOT assume a location
+5. `cd` to the repo before proceeding
 
 ## Setting Up Upstream
 
