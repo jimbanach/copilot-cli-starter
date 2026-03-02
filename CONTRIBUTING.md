@@ -42,20 +42,45 @@ cd copilot-cli-starter
 
 ### 2. Make Your Improvement
 
-Common contributions:
-- **New persona** — add a directory under `personas/` with an `AGENTS.md`
-- **Improved persona** — edit an existing `personas/*/AGENTS.md`
-- **New skill** — add a directory under `skills/` with a `SKILL.md`
+Most improvements start from your live `~/.copilot/` setup — that's where you work day-to-day. Common contributions:
+- **New persona** — create a directory under `~/.copilot/personas/` with an `AGENTS.md`
+- **Improved persona** — edit an existing `~/.copilot/personas/*/AGENTS.md`
+- **New skill** — create a directory under `~/.copilot/skills/` with a `SKILL.md`
 - **Bug fix** — fix an issue in a script, skill, or agent
 - **Documentation** — improve README, add examples, clarify instructions
 
-### 3. Test Your Change
+### 3. Copy Your Improvement to Your Fork
 
-Before submitting:
-- Run `.\init.ps1` to deploy your changes locally
-- Launch Copilot CLI and verify the change works as expected
-- If you modified a persona, switch to it and test
-- If you modified a skill, trigger it and verify behavior
+Your live setup (`~/.copilot/`) and your fork (`~/copilot-cli-starter/`) are separate. Before committing, copy the improved file(s) from your live setup to your fork:
+
+```powershell
+# Example: you improved a persona
+Copy-Item ~/.copilot/personas/my-persona/AGENTS.md ~/copilot-cli-starter/personas/my-persona/AGENTS.md
+
+# Example: you created a new skill
+Copy-Item ~/.copilot/skills/my-skill/ ~/copilot-cli-starter/skills/my-skill/ -Recurse
+```
+
+> ⚠️ **Important:** Always copy FROM `~/.copilot/` TO your fork — never run `init.ps1` before copying, as it could overwrite your local improvements with the older repo version.
+
+### 4. Test Your Change
+
+Verify your contribution works by running init in dry-run mode:
+
+```powershell
+cd ~/copilot-cli-starter
+.\init.ps1 -DryRun
+```
+
+If you want a full test, back up first:
+```powershell
+# Backup, deploy from fork, test, then restore
+Rename-Item ~/.copilot ~/.copilot-test-backup
+.\init.ps1
+# ... test in Copilot CLI ...
+Remove-Item ~/.copilot -Recurse -Force
+Rename-Item ~/.copilot-test-backup ~/.copilot
+```
 
 ### 4. Commit with a Clear Message
 
