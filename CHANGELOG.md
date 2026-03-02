@@ -5,9 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [2026-03-02] - Phase 6: Documentation polish & production readiness
+## [2026-03-02] - Upstream sync: project storage + backlog fixes
 ### Added
-- Sync repo: "How To" quick reference table with all common operations
+- `New-CopilotProject.ps1`: `-GitHub` flag, cloud-sync detection, forwarding folder pattern
+- Base instructions template: "Project Storage Rules" section with `{{GITHUB_PROJECTS_PATH}}`
+- `init.ps1`: prerequisites check, account verification, backup retention, github_projects_path prompt
+- `.github/pull_request_template.md`: checklist for contributions
+### Changed
+- `Switch-CopilotPersona.ps1`: detects unsaved edits before switching, CRLF-tolerant comparison
+- Config-sync SKILL.md: expanded repo discovery, account display in sync-status
+- Template-update SKILL.md: expanded repo discovery paths
 - Sync repo: Starter prompts for restore and sync check
 - Starter repo: Starter prompts for first-time setup (CLI + VS Code), updates, persona switching
 
