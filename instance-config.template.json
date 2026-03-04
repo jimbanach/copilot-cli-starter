@@ -13,5 +13,9 @@
   "branch": "main",
   "repo_local_path": "~/copilot-cli-config",
   "github_account": "your-github-username",
-  "persona_list": "productivity, deep-technical, security-architect, marketing, program-manager, architect-marketer, hypervelocity-engineer"
+  "persona_list": "productivity, deep-technical, security-architect, marketing, program-manager, architect-marketer, hypervelocity-engineer",
+  "known_folders": {
+    "desktop": "auto-detected by init.ps1",
+    "documents": "auto-detected by init.ps1"
+  }
 }

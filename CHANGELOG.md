@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2026-03-04] - Upstream sync: OneDrive Known Folder Move support
+### Fixed
+- `init.ps1`: Auto-detects OneDrive Known Folder Move paths for Desktop and Documents, stores in `instance-config.json`
+- Layer 2 instance instructions: Added "Known Folder Paths" section so Copilot saves files to correct redirected locations
+- `instance-config.template.json`: Added `known_folders` field
+
 ## [2026-03-02b] - Upstream sync: meeting agent cleanup
 ### Changed
 - `meeting-transcript-processor.agent.md`: Now a standalone interactive agent (no longer requires orchestrator)

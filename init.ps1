@@ -355,6 +355,20 @@ if (-not $instanceName) {
     $mcpProfile = if ($instanceName -eq "work") { "work" } else { "universal" }
 }
 
+# --- Step 3b: Auto-detect known folder paths (OneDrive Known Folder Move) ---
+$knownFolders = @{
+    desktop = [Environment]::GetFolderPath('Desktop')
+    documents = [Environment]::GetFolderPath('MyDocuments')
+}
+$kfmDetected = ($knownFolders.desktop -ne "$env:USERPROFILE\Desktop") -or ($knownFolders.documents -ne "$env:USERPROFILE\Documents")
+if ($kfmDetected) {
+    Write-Info "OneDrive Known Folder Move detected:"
+    Write-Info "  Desktop:   $($knownFolders.desktop)"
+    Write-Info "  Documents: $($knownFolders.documents)"
+} else {
+    Write-Info "Known folders at default profile paths"
+}
+
 # --- Step 4: Create instance-config.json ---
 $instanceConfig = @{
     instance_name = $instanceName
@@ -366,6 +380,7 @@ $instanceConfig = @{
     mcp_profile = $mcpProfile
     repo_local_path = $repoRoot
     branch = if ($instanceName -eq "work") { "work" } elseif ($instanceName -eq "personal") { "personal" } else { "main" }
+    known_folders = $knownFolders
 }
 
 $configPath = "$repoRoot\instance-config.json"
@@ -459,6 +474,8 @@ if ($Mode -eq "consume") {
         $rulesContent = Resolve-Template -TemplatePath $instanceRulesFile -Variables @{
             WORKSPACE_PATH = $workspacePath
             GITHUB_ACCOUNT = $githubAccount
+            DESKTOP_PATH = $knownFolders.desktop
+            DOCUMENTS_PATH = $knownFolders.documents
         }
         Set-Content "$activeDir\instance.instructions.md" -Value $rulesContent
         Write-Success "Layer 2 deployed ($instanceName rules)"
