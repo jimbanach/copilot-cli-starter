@@ -7,6 +7,17 @@ Portable Copilot CLI configuration with 3-layer instruction model, persona switc
 - [CHANGELOG](./CHANGELOG.md)
 - [Implementation Plan](./PLAN.md)
 
+## Prerequisites
+
+- **Git** — [Install](https://git-scm.com/downloads)
+- **GitHub CLI (`gh`)** — [Install](https://cli.github.com/)
+- **GitHub Copilot CLI** — [Install](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli)
+- **PowerShell 6+** — [Install](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
+- **Python 3.10+** — [Install](https://www.python.org/downloads/)
+- **Node.js 18+** *(optional)* — [Install](https://nodejs.org/) (needed for MCP servers)
+
+The `init.ps1` script checks for these automatically and exits with install links if any are missing.
+
 ## Account Setup
 
 This repo is hosted under `{{YOUR_NAME}}banach` (regular GitHub account, not enterprise-managed). Both work and personal machines access it through this account.
