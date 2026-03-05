@@ -2,6 +2,16 @@
 
 Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync.
 
+## 🙋 Help Wanted — We Need Testers!
+
+This project is ready for peer adoption, but we need help validating a few scenarios. If you can spare 30 minutes, pick one and report your experience:
+
+| # | Scenario | Who can help |
+|---|----------|-------------|
+| [#1](../../issues/1) | **Validate full setup in VS Code** | Anyone using GitHub Copilot in VS Code |
+| [#2](../../issues/2) | **Validate setup on WSL / Linux** | Anyone running WSL or native Linux |
+| [#3](../../issues/3) | **End-to-end onboarding test** | Anyone who's never used this system before |
+
 ## Quick Links
 
 - [CHANGELOG](./CHANGELOG.md)
