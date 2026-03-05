@@ -96,7 +96,7 @@ CATEGORIES = {
         'local_subdir': 'agents',
         'item_type': 'file',
         'pattern': '*.agent.md',
-        'exclude_dirs': [],
+        'exclude_dirs': ['_disabled'],
     },
     'scripts': {
         'repo_subdir': 'scripts',
@@ -182,8 +182,11 @@ def compare_directory_items(repo_dir, local_dir, key_file, exclude_dirs):
     return results
 
 
-def compare_file_items(repo_dir, local_dir, pattern):
+def compare_file_items(repo_dir, local_dir, pattern, exclude_dirs=None):
     """Compare file-based items (agents, scripts)."""
+    if exclude_dirs is None:
+        exclude_dirs = []
+
     results = {'new_in_repo': [], 'modified': [], 'local_only': [], 'identical': []}
 
     repo_path = Path(repo_dir)
@@ -191,16 +194,27 @@ def compare_file_items(repo_dir, local_dir, pattern):
 
     repo_files = set()
     if repo_path.exists():
-        repo_files = {f.name for f in repo_path.glob(pattern)}
+        repo_files = {f.name for f in repo_path.glob(pattern) if f.is_file()}
 
     local_files = set()
     if local_path.exists():
-        local_files = {f.name for f in local_path.glob(pattern)}
+        local_files = {f.name for f in local_path.glob(pattern) if f.is_file()}
+
+    # Build set of disabled items (in local _disabled/ folder)
+    disabled_files = set()
+    for exc_dir in exclude_dirs:
+        disabled_path = local_path / exc_dir
+        if disabled_path.exists():
+            disabled_files |= {f.name for f in disabled_path.glob(pattern) if f.is_file()}
 
     for name in repo_files - local_files:
         results['new_in_repo'].append(name)
 
     for name in local_files - repo_files:
+        # Don't report as local_only if the file is also in _disabled/
+        # (it's a leftover that should be cleaned up, not pushed)
+        if name in disabled_files:
+            continue
         results['local_only'].append(name)
 
     for name in repo_files & local_files:
@@ -238,7 +252,8 @@ def run_comparison(repo_path, copilot_dir, categories=None):
         else:
             results = compare_file_items(
                 repo_dir, local_dir,
-                cat['pattern']
+                cat['pattern'],
+                cat.get('exclude_dirs', [])
             )
 
         all_results[cat_name] = results

@@ -179,8 +179,8 @@ if ($GitHub) {
 Write-Host ""
 Write-Host "  Creating project..." -ForegroundColor Cyan
 
-if ($Environment -eq "wsl") {
-    # Delegate to WSL setup script
+if ($Environment -eq "wsl" -and -not $GitHub) {
+    # Delegate non-GitHub WSL projects to WSL setup script
     $setupScript = "$env:USERPROFILE\.copilot\skills\environment-advisor\setup-wsl-project.ps1"
     if (Test-Path $setupScript) {
         & $setupScript -ProjectName $Name
@@ -190,7 +190,14 @@ if ($Environment -eq "wsl") {
     }
 }
 
-if ($Environment -ne "wsl") {
+if ($Environment -eq "wsl" -and $GitHub) {
+    # GitHub-backed WSL projects: create in GitHubProjects (Windows-accessible)
+    # and fall through to standard GitHub project creation
+    Write-Host "  ℹ️  GitHub-backed WSL project — creating in $githubRoot (Windows-accessible)" -ForegroundColor Cyan
+    Write-Host "  Access from WSL via: /mnt/c/Users/$env:USERNAME/GitHubProjects/$Name" -ForegroundColor DarkGray
+}
+
+if ($Environment -ne "wsl" -or $GitHub) {
     # Create native or docker project in CopilotWorkspace
     New-Item -ItemType Directory -Path "$projectPath\.github" -Force | Out-Null
 
@@ -309,6 +316,33 @@ Do NOT work in this folder. Automatically ``cd`` to the actual project location 
     }
 }
 
+# Create WSL symlink for GitHub-backed WSL projects
+if ($Environment -eq "wsl" -and $GitHub) {
+    $wslProjectPath = "/mnt/c" + ($projectPath -replace '^C:', '' -replace '\\', '/')
+    $wslLinkDir = "~/projects"
+    $wslLinkPath = "$wslLinkDir/$Name"
+
+    # Find a usable WSL distro (skip docker-desktop distros)
+    $wslDistro = $null
+    $distros = wsl --list --quiet 2>$null | ForEach-Object { ($_ -replace '[^\x20-\x7E]', '').Trim() } | Where-Object { $_ -and $_ -notlike '*docker*' }
+    if ($distros) { $wslDistro = ($distros | Select-Object -First 1).Trim() }
+
+    Write-Host ""
+    Write-Host "  🔗 Creating WSL symlink..." -ForegroundColor Cyan
+    try {
+        if ($wslDistro) {
+            wsl -d $wslDistro -- bash -c "mkdir -p $wslLinkDir && ln -sfn '$wslProjectPath' '$wslLinkPath'" 2>&1 | Out-Null
+            Write-Host "  ✅ WSL symlink: ~/projects/$Name → $wslProjectPath (distro: $wslDistro)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "  ⚠️  No usable WSL distro found. Create symlink manually:" -ForegroundColor Yellow
+            Write-Host "    ln -s $wslProjectPath ~/projects/$Name" -ForegroundColor DarkGray
+        }
+    } catch {
+        Write-Host "  ⚠️  Could not create WSL symlink. Create manually:" -ForegroundColor Yellow
+        Write-Host "    ln -s $wslProjectPath ~/projects/$Name" -ForegroundColor DarkGray
+    }
+}
+
 # Summary
 Write-Host ""
 Write-Host "  ✅ Project '$Name' created successfully!" -ForegroundColor Green
@@ -319,6 +353,9 @@ Write-Host "  🖥  Environment: $Environment" -ForegroundColor DarkGray
 if ($GitHub) {
     Write-Host "  🔗 GitHub:      Yes (stored in $githubRoot)" -ForegroundColor DarkGray
     Write-Host "  📁 Forwarding:  $workspaceRoot\$Name\" -ForegroundColor DarkGray
+}
+if ($Environment -eq "wsl" -and $GitHub) {
+    Write-Host "  🐧 WSL path:    ~/projects/$Name" -ForegroundColor DarkGray
 }
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan

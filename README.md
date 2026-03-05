@@ -6,6 +6,22 @@ Portable Copilot CLI configuration with 3-layer instruction model, persona switc
 
 - [CHANGELOG](./CHANGELOG.md)
 - [Implementation Plan](./PLAN.md)
+- [Effective Project Prompts](./docs/effective-project-prompts.md)
+
+## Table of Contents
+
+- [Quick Links](#quick-links)
+- [Prerequisites](#prerequisites)
+- [Account Setup](#account-setup)
+- [Architecture: 3-Layer Instruction Model](#architecture-3-layer-instruction-model)
+- [Persona Switching](#persona-switching)
+- [Repo Structure](#repo-structure)
+- [Init Script](#init-script)
+- [Config-Sync Workflows](#config-sync-workflows)
+- [Reviewing Peer PRs](#reviewing-peer-prs)
+- [Prompt Guidance](#prompt-guidance)
+- [How To](#how-to)
+- [Starter Prompts](#starter-prompts)
 
 ## Prerequisites
 
@@ -306,6 +322,12 @@ cd ~/copilot-cli-config
 # Cherry-pick or manually apply the change
 # Commit to work branch, then promote to main
 ```
+
+## Prompt Guidance
+
+Writing effective project prompts makes the difference between Copilot asking 10 follow-up questions and hitting the ground running. The **Full Context Handoff** pattern gives Copilot everything it needs — people, data locations, communication channels, and work tracking — in a single prompt.
+
+📖 **[Effective Project Prompts →](./docs/effective-project-prompts.md)** — Full pattern guide with annotated examples and a copy-paste template.
 
 ## How To
 

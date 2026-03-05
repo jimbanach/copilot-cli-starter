@@ -3,6 +3,17 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-03-05] - Upstream sync: README restructuring, prompt guidance, bug fixes
+### Added
+- `docs/effective-project-prompts.md`: Full Context Handoff pattern for writing effective project prompts
+- `docs/init-script-details.md`: Detailed init script workflow documentation
+- README: Table of contents with anchor links, Prompt Guidance section
+### Changed
+- `init.ps1`: OneDrive Known Folder Move detection, local-only file cleanup (Step 8b), COPILOT_DIR template variable
+- `New-CopilotProject.ps1`: GitHub-backed WSL projects now create in GitHubProjects with WSL symlink, distro detection
+- `base/copilot-instructions.md.template`: Per-project persona enforcement via project.json
+- `compare.py`: Respects `_disabled/` folder, prevents incorrect re-sync of disabled agents
+
 ## [Unreleased]
 
 ## [2026-03-04] - Upstream sync: OneDrive Known Folder Move support

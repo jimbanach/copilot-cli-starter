@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Initialize Copilot CLI environment from the copilot-cli-config repo.
 
@@ -431,6 +431,7 @@ if ($Mode -eq "consume") {
         USER_NAME = $displayName
         WORKSPACE_PATH = $workspacePath
         GITHUB_PROJECTS_PATH = $githubProjectsPath
+        COPILOT_DIR = $copilotDir
         ENVIRONMENTS = "$displayName has $($environments -join ', ') available"
         PERSONA_LIST = ((Get-ChildItem "$repoRoot\personas" -Directory | Where-Object {
             Test-Path "$($_.FullName)\AGENTS.md"
@@ -631,6 +632,98 @@ if ($Mode -eq "consume") {
                     Write-Skip "$($item.Name) skipped"
                 }
                 $importLog += "$($cat.Name)/$($item.Name) → skipped"
+            }
+        }
+    }
+
+    # --- Step 8b: Detect and offer to remove local-only items ---
+    Write-Host ""
+    Write-Host "  🧹 Checking for local-only items (removed from repo)..." -ForegroundColor Cyan
+
+    $localOnlyItems = @()
+
+    foreach ($cat in $categories) {
+        $repoDir = "$repoRoot\$($cat.RepoPath)"
+        $localDir = if ($cat.LocalPath -eq ".") { $copilotDir } else { "$copilotDir\$($cat.LocalPath)" }
+
+        if (-not (Test-Path $localDir)) { continue }
+
+        if ($cat.Name -eq "Personas") {
+            $repoNames = @(Get-ChildItem $repoDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path "$($_.FullName)\AGENTS.md" } | ForEach-Object { $_.Name })
+            $localNames = @(Get-ChildItem $localDir -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'active' -and (Test-Path "$($_.FullName)\AGENTS.md") } | ForEach-Object { $_.Name })
+            foreach ($name in $localNames) {
+                if ($name -notin $repoNames) {
+                    $localOnlyItems += @{ Category = $cat.Name; Name = $name; Path = "$localDir\$name"; IsDir = $true }
+                }
+            }
+        } elseif ($cat.Name -eq "Skills") {
+            $repoNames = @(Get-ChildItem $repoDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | ForEach-Object { $_.Name })
+            $localNames = @(Get-ChildItem $localDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | ForEach-Object { $_.Name })
+            foreach ($name in $localNames) {
+                if ($name -notin $repoNames) {
+                    $localOnlyItems += @{ Category = $cat.Name; Name = $name; Path = "$localDir\$name"; IsDir = $true }
+                }
+            }
+        } elseif ($cat.Name -eq "Agents") {
+            $repoNames = @(Get-ChildItem $repoDir -Filter "*.agent.md" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
+            $localNames = @(Get-ChildItem $localDir -Filter "*.agent.md" -File -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
+            foreach ($name in $localNames) {
+                if ($name -notin $repoNames) {
+                    $localOnlyItems += @{ Category = $cat.Name; Name = $name; Path = "$localDir\$name"; IsDir = $false }
+                }
+            }
+        } elseif ($cat.Name -eq "Scripts") {
+            $repoNames = @(Get-ChildItem $repoDir -Filter "*.ps1" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
+            $localNames = @(Get-ChildItem $localDir -Filter "*.ps1" -File -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
+            foreach ($name in $localNames) {
+                if ($name -notin $repoNames) {
+                    $localOnlyItems += @{ Category = $cat.Name; Name = $name; Path = "$localDir\$name"; IsDir = $false }
+                }
+            }
+        }
+    }
+
+    if ($localOnlyItems.Count -eq 0) {
+        Write-Info "No local-only items found — local matches repo"
+    } else {
+        Write-Host "  Found $($localOnlyItems.Count) local-only item(s) not in repo:" -ForegroundColor Yellow
+        foreach ($item in $localOnlyItems) {
+            Write-Host "    📁 $($item.Category)/$($item.Name)" -ForegroundColor Yellow
+        }
+        Write-Host ""
+        Write-Host "  [1] Delete All — remove local-only items to match repo"
+        Write-Host "  [2] Skip All — keep local copies"
+        Write-Host "  [3] Review Each — decide per item"
+        Write-Host ""
+        $cleanupChoice = Read-Host "  Select (1-3, default: 2)"
+
+        foreach ($item in $localOnlyItems) {
+            $deleteIt = switch ($cleanupChoice) {
+                "1" { $true }
+                "3" {
+                    Write-Host "    $($item.Category)/$($item.Name) — local only (not in repo)" -ForegroundColor Yellow
+                    Write-Host "    [1] Delete  [2] Keep"
+                    $perItem = Read-Host "    Select (1-2, default: 2)"
+                    $perItem -eq "1"
+                }
+                default { $false }
+            }
+
+            if ($deleteIt) {
+                if ($DryRun) {
+                    Write-Info "[DRY RUN] Would delete $($item.Path)"
+                } else {
+                    if ($item.IsDir) {
+                        Remove-Item $item.Path -Recurse -Force
+                    } else {
+                        Remove-Item $item.Path -Force
+                    }
+                    Write-Success "$($item.Category)/$($item.Name) deleted"
+                }
+                $importLog += "$($item.Category)/$($item.Name) → deleted (local-only)"
+            } else {
+                Write-Skip "$($item.Category)/$($item.Name) kept"
+                $importLog += "$($item.Category)/$($item.Name) → kept (local-only)"
             }
         }
     }

@@ -17,6 +17,8 @@ These instructions apply to all personas and sessions. They define workspace str
 - If {{USER_NAME}} doesn't specify which project they're working on and the task seems project-specific, ask.
 - If they mention starting something new, suggest creating a project with `New-CopilotProject.ps1`
 - When {{USER_NAME}} confirms they're working in a specific project, then read its `.github/copilot-instructions.md` and `project.json` for context
+- **After switching to a project, prompt {{USER_NAME}} to update the CLI working directory** so the status bar reflects the repo/branch: suggest they run `/cwd <project-path>` (the agent cannot invoke slash commands directly)
+- **Per-project persona enforcement:** When opening a project, check the `persona` field in `project.json`. If it differs from the currently loaded persona (from `personas/active/AGENTS.md`), read the correct persona file from `~/.copilot/personas/<persona>/AGENTS.md` into context and announce: "This project uses the **[persona name]** persona — loading it now." Mid-session persona switches are temporary and do not update `project.json`.
 
 ### Project Storage Rules
 - **Local-only projects** (not backed by GitHub) live in `{{WORKSPACE_PATH}}` (cloud-synced)
@@ -26,7 +28,7 @@ These instructions apply to all personas and sessions. They define workspace str
   - `MOVED-TO-GITHUB.md` — human-readable notice explaining the move
   - `.lnk` shortcut — for File Explorer navigation
   - `.github/copilot-instructions.md` updated with "This project has moved" notice
-- **When you encounter a project with `MOVED-TO-GITHUB.md` or a `project.json` with `github_backed: true` and `moved_to` set, automatically `cd` to the actual project location before proceeding. Do NOT work in the forwarding folder.**
+- **When you encounter a project with `MOVED-TO-GITHUB.md` or a `project.json` with `github_backed: true` and `moved_to` set, automatically `cd` to the actual project location before proceeding. Do NOT work in the forwarding folder.** Also prompt {{USER_NAME}} to run `/cwd <actual-path>` so the CLI status bar updates.
 - When creating a new project with `New-CopilotProject.ps1 -GitHub`, the script creates the project in `{{GITHUB_PROJECTS_PATH}}` and the forwarding folder in `{{WORKSPACE_PATH}}` automatically
 - If you see a `.git` directory inside a OneDrive/cloud-sync path, flag it to the user as a potential issue
 
@@ -44,6 +46,19 @@ These skills are auto-loaded when relevant, or can be invoked with `/skill-name`
 
 ### Personas
 {{USER_NAME}} can switch personas mid-session by saying "switch to [persona name]" or using the switch-persona skill. Available personas: {{PERSONA_LIST}}.
+
+### Playwright MCP — Session Lock Protocol
+The Playwright MCP uses `--browser msedge` with the real Edge managed profile for SSO to M365 services. **Only one session can use Playwright at a time** due to Edge's profile locking.
+
+Before calling **any** Playwright tool (`browser_snapshot`, `browser_click`, `browser_navigate`, etc.):
+1. Run: `pwsh {{COPILOT_DIR}}/scripts/playwright-lock.ps1 check`
+2. If **AVAILABLE** → run `pwsh {{COPILOT_DIR}}/scripts/playwright-lock.ps1 acquire`, then proceed with Playwright tools
+3. If **LOCKED** → tell {{USER_NAME}} which session has the lock and suggest waiting or force-releasing it. Do NOT call Playwright tools.
+
+When finished using Playwright (or if the task no longer needs it):
+- Run: `pwsh {{COPILOT_DIR}}/scripts/playwright-lock.ps1 release`
+
+Stale locks (where the owning process has died) are automatically cleaned up by the script.
 
 ### Environment Awareness
 - When {{USER_NAME}} starts work that involves untrusted code, conflicting runtimes, or security-sensitive tasks, proactively use the environment-advisor skill to recommend native Windows, WSL, or Docker
