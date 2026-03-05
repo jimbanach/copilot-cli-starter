@@ -8,9 +8,9 @@ This project is ready for peer adoption, but we need help validating a few scena
 
 | # | Scenario | Who can help |
 |---|----------|-------------|
-| [#1](../../issues/1) | **Validate full setup in VS Code** | Anyone using GitHub Copilot in VS Code |
-| [#2](../../issues/2) | **Validate setup on WSL / Linux** | Anyone running WSL or native Linux |
-| [#3](../../issues/3) | **End-to-end onboarding test** | Anyone who's never used this system before |
+| **VS Code** | [Validate full setup in VS Code](../../issues?q=is%3Aissue+is%3Aopen+VS+Code) | Anyone using GitHub Copilot in VS Code |
+| **WSL/Linux** | [Validate setup on WSL / Linux](../../issues?q=is%3Aissue+is%3Aopen+WSL) | Anyone running WSL or native Linux |
+| **New User** | [End-to-end onboarding test](../../issues?q=is%3Aissue+is%3Aopen+onboarding) | Anyone who's never used this system before |
 
 ## Quick Links
 
