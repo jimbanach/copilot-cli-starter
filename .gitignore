@@ -1,6 +1,7 @@
 # Instance-specific (never commit)
 instance-config.json
 .copilot-sync/
+.copilot/
 sync-state.json
 
 # Copilot CLI runtime

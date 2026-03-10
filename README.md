@@ -30,6 +30,7 @@ This project is ready for peer adoption, but we need help validating a few scena
 - [Config-Sync Workflows](#config-sync-workflows)
 - [Reviewing Peer PRs](#reviewing-peer-prs)
 - [Prompt Guidance](#prompt-guidance)
+- [Save State Protocol](#save-state-protocol)
 - [How To](#how-to)
 - [Starter Prompts](#starter-prompts)
 
@@ -339,12 +340,40 @@ Writing effective project prompts makes the difference between Copilot asking 10
 
 📖 **[Effective Project Prompts →](./docs/effective-project-prompts.md)** — Full pattern guide with annotated examples and a copy-paste template.
 
+## Save State Protocol
+
+This configuration adds a structured state-saving system that goes beyond what Copilot CLI provides natively. When you say **"save my state"** or at natural checkpoints (after completing an issue, committing code, or hitting a milestone), the agent writes a `.copilot/session-state.md` file in your project folder.
+
+### What gets saved
+
+- **Session ID and machine context** — so future sessions can query the session store and know which machine the work happened on
+- **Session history** — a running table of past session IDs, dates, and summaries for this project
+- **Current status** — what was just completed, what's in progress
+- **Actionable items** — in-progress tasks, completed work, and next steps with enough detail to resume without context
+- **Open issues** — which GitHub issues are being actively worked
+- **Uncommitted changes** — so you know if something was left hanging
+
+### How it works
+
+| Trigger | Behavior |
+|---------|----------|
+| "save my state" / "save my progress" | Writes/updates `.copilot/session-state.md` immediately |
+| After completing an issue or committing | Auto-saves at natural checkpoints |
+| Opening a project with existing state | Agent offers: "Last session [date] on [machine]: [status]. Pick up where you left off?" |
+
+### Why this matters
+
+If a session is lost (machine restart, context window cleared, session can't be resumed), the state file preserves everything needed to continue. It lives in the project folder — not the session store — so it survives even a full Copilot CLI reinstall.
+
+> **Note:** `.copilot/` in project folders is gitignored by default — it's local working state, not repo content.
+
 ## How To
 
 Quick reference for common operations:
 
 | Task | Command / Action |
 |------|-----------------|
+| **Save session state** | Say "save my state" or auto-saves at checkpoints → writes `.copilot/session-state.md` |
 | **Switch persona** | Say "switch to productivity" or run `Switch-CopilotPersona.ps1 -Persona productivity` |
 | **List personas** | `Switch-CopilotPersona.ps1 -List` |
 | **Check for sync updates** | Say "check for updates" in Copilot CLI |

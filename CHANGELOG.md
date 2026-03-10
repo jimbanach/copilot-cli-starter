@@ -3,6 +3,12 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-03-10] - Upstream sync: Save State Protocol
+### Added
+- Base instructions: Save State Protocol — structured `.copilot/session-state.md` in project folders with session history, machine context, and resume instructions
+- `.gitignore`: Added `.copilot/` exclusion for project-level session state
+- README: New "Save State Protocol" section documenting the feature
+
 ## [2026-03-05] - Upstream sync: README restructuring, prompt guidance, bug fixes
 ### Added
 - `docs/effective-project-prompts.md`: Full Context Handoff pattern for writing effective project prompts

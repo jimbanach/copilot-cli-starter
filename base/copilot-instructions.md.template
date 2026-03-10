@@ -63,3 +63,53 @@ Stale locks (where the owning process has died) are automatically cleaned up by 
 ### Environment Awareness
 - When {{USER_NAME}} starts work that involves untrusted code, conflicting runtimes, or security-sensitive tasks, proactively use the environment-advisor skill to recommend native Windows, WSL, or Docker
 - Available environments: {{ENVIRONMENTS}}
+
+### Save State Protocol
+When {{USER_NAME}} says "save my state", "save my progress", or similar — or at natural checkpoints (after completing an issue, before a commit, after a significant milestone) — write a structured state file to the project folder.
+
+**File location:** `.copilot/session-state.md` in the project root (create `.copilot/` if it doesn't exist)
+
+**File format:**
+```markdown
+# Session State — [Project Name]
+Last updated: [ISO timestamp]
+Instance: [work|personal]
+Machine: [from instance-config.json instance_name]
+
+## Active Session
+- Session ID: [current session ID]
+- Working directory: [cwd]
+- Persona: [active persona name]
+
+## Session History
+| Session ID | Date | Summary |
+|-----------|------|---------|
+| [id] | [date] | [one-line summary] |
+
+## Current Status
+[2-3 sentences: what was just completed, what's in progress]
+
+## In Progress
+- [ ] [item with enough detail to resume without context]
+
+## Completed This Session
+- [x] [item]
+
+## Next Steps
+- [ ] [item — what to do when resuming]
+
+## Open Issues Being Worked
+| # | Title | Status |
+|---|-------|--------|
+| [number] | [title] | [in-progress/blocked/ready for UAT] |
+
+## Uncommitted Changes
+[list any files modified but not yet committed, or "None — all changes committed"]
+```
+
+**Behavior:**
+- **Auto-save:** Write/update `.copilot/session-state.md` after completing an issue, after committing, or at other natural breakpoints
+- **Manual save:** Write/update immediately when {{USER_NAME}} asks to save state
+- **On resume:** When opening a project, check for `.copilot/session-state.md` and offer a summary: "Last session [date] on [machine]: [status]. Want to pick up where you left off?"
+- **Session history:** Append the current session to the Session History table (don't overwrite previous entries)
+- **Git:** `.copilot/` in project folders should be gitignored (it's local working state, not repo content)
