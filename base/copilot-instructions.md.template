@@ -110,6 +110,6 @@ Machine: [from instance-config.json instance_name]
 **Behavior:**
 - **Auto-save:** Write/update `.copilot/session-state.md` after completing an issue, after committing, or at other natural breakpoints
 - **Manual save:** Write/update immediately when {{USER_NAME}} asks to save state
-- **On resume:** When opening a project, check for `.copilot/session-state.md` and offer a summary: "Last session [date] on [machine]: [status]. Want to pick up where you left off?"
+- **On resume:** When {{USER_NAME}} says "pick up where I left off", "resume my project", "continue my project", or similar — OR when opening a project for the first time in a session — check for `.copilot/session-state.md` and offer a summary: "Last session [date] on [machine]: [status]. Want to pick up where you left off?" Then read the state file to restore context.
 - **Session history:** Append the current session to the Session History table (don't overwrite previous entries)
 - **Git:** `.copilot/` in project folders should be gitignored (it's local working state, not repo content)
