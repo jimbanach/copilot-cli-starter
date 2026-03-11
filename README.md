@@ -145,7 +145,7 @@ The `Switch-CopilotPersona.ps1` script manages Layer 3. It:
 | `security-architect` | Security partner marketing technical architect — positioning and enablement |
 | `marketing` | Marketing strategist — messaging, campaigns, content, competitive positioning |
 | `program-manager` | Program management partner — planning, tracking, stakeholder management |
-| `architect-marketer` | PAC strategist — blends technical depth with GTM and program management |
+| `architect-marketer` | Technical Marketing Professional — blends technical depth with GTM and program management |
 | `hypervelocity-engineer` | HVE practitioner — AI-native, outcome-focused rapid delivery methodology |
 
 ## Repo Structure
