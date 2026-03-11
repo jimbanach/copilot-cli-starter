@@ -221,6 +221,22 @@ This project uses the **$Persona** persona.
 ## Key Resources
 - Shared resources: ``CopilotWorkspace\_shared-resources\``
 - Project metadata: ``project.json``
+
+---
+
+## Tracked Workstreams
+
+Use the short IDs below to tag artifacts, session notes, and review items so they can be filtered and tracked by workstream. New workstreams can be added as the project evolves.
+
+| ID | Workstream | Description | Current State |
+|----|-----------|-------------|---------------|
+| ``general`` | General | Default workstream for all project activities | Active |
+
+### Tagging Rules
+- Tag artifacts with ``Workstreams:`` metadata when the workstream is clear (e.g., ``Workstreams: general``)
+- Multi-tag when content spans workstreams (e.g., ``Workstreams: design, implementation``)
+- If the right tag is unclear, ask Jim rather than guessing
+- New workstreams can be added as the project evolves
 "@
     Set-Content -Path "$projectPath\.github\copilot-instructions.md" -Value $instructions
 

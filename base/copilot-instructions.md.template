@@ -19,6 +19,7 @@ These instructions apply to all personas and sessions. They define workspace str
 - When {{USER_NAME}} confirms they're working in a specific project, then read its `.github/copilot-instructions.md` and `project.json` for context
 - **After switching to a project, prompt {{USER_NAME}} to update the CLI working directory** so the status bar reflects the repo/branch: suggest they run `/cwd <project-path>` (the agent cannot invoke slash commands directly)
 - **Per-project persona enforcement:** When opening a project, check the `persona` field in `project.json`. If it differs from the currently loaded persona (from `personas/active/AGENTS.md`), read the correct persona file from `~/.copilot/personas/<persona>/AGENTS.md` into context and announce: "This project uses the **[persona name]** persona — loading it now." Mid-session persona switches are temporary and do not update `project.json`.
+- **Workstream tagging:** Every project includes a Tracked Workstreams section in its `copilot-instructions.md`. New projects start with a default `general` workstream. When setting up a new project, if the user describes multiple distinct workstreams or activities, populate the workstream table with appropriate short IDs instead of just `general`. Tag artifacts with `Workstreams:` metadata. If the right tag is unclear, ask.
 
 ### Project Storage Rules
 - **Local-only projects** (not backed by GitHub) live in `{{WORKSPACE_PATH}}` (cloud-synced)
