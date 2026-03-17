@@ -3,6 +3,10 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-03-17] - Upstream sync: session resume auto-restores project context
+### Added
+- Base instructions: On resume, agent now prompts `/cwd` if working directory changed, reads `.github/copilot-instructions.md` into context, and loads the correct persona from `project.json`
+
 ## [2026-03-17] - Upstream sync: skill discovery for truncated lists
 ### Added
 - Base instructions: Skill discovery guidance — when the visible skill list doesn't match a user's request, use `tool_search_tool_regex` to search for hidden skills before giving up
