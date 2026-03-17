@@ -44,6 +44,7 @@ These skills are auto-loaded when relevant, or can be invoked with `/skill-name`
 - **environment-advisor** — Recommend native Windows vs WSL vs Docker for a project
 - **switch-persona** — Switch persona mid-chat without restarting
 - **config-sync** — Review, compare, and sync Copilot CLI configuration between machines
+- **Skill discovery:** The visible skill list above may be incomplete. If a user's request doesn't match any listed skill, use `tool_search_tool_regex` to search for matching tools before concluding no relevant skill exists. If a match is found, invoke the corresponding skill.
 
 ### Personas
 {{USER_NAME}} can switch personas mid-session by saying "switch to [persona name]" or using the switch-persona skill. Available personas: {{PERSONA_LIST}}.
@@ -81,6 +82,8 @@ Machine: [from instance-config.json instance_name]
 - Session ID: [current session ID]
 - Working directory: [cwd]
 - Persona: [active persona name]
+- Target session name: [project-folder]-[MM-DD-YY]
+- Rename command: [/rename [project-folder]-[MM-DD-YY]]
 
 ## Session History
 | Session ID | Date | Summary |
@@ -111,6 +114,7 @@ Machine: [from instance-config.json instance_name]
 **Behavior:**
 - **Auto-save:** Write/update `.copilot/session-state.md` after completing an issue, after committing, or at other natural breakpoints
 - **Manual save:** Write/update immediately when {{USER_NAME}} asks to save state
-- **On resume:** When {{USER_NAME}} says "pick up where I left off", "resume my project", "continue my project", or similar — OR when opening a project for the first time in a session — check for `.copilot/session-state.md` and offer a summary: "Last session [date] on [machine]: [status]. Want to pick up where you left off?" Then read the state file to restore context.
+- **Session naming:** When saving state or restoring context, derive a target session name from the current project folder plus the current date in `MM-DD-YY` format (example: `copilot-cli-config-03-13-26`). Record that value and the exact `/rename <target>` command in `.copilot/session-state.md`, then tell {{USER_NAME}} to run the command because the agent cannot invoke Copilot CLI slash commands directly.
+- **On resume:** When {{USER_NAME}} says "pick up where I left off", "resume my project", "continue my project", or similar — OR when opening a project for the first time in a session — check for `.copilot/session-state.md` and offer a summary: "Last session [date] on [machine]: [status]. Want to pick up where you left off?" Then read the state file to restore context and surface the current session's `/rename <target>` command.
 - **Session history:** Append the current session to the Session History table (don't overwrite previous entries)
 - **Git:** `.copilot/` in project folders should be gitignored (it's local working state, not repo content)

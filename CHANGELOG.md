@@ -3,6 +3,15 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-03-17] - Upstream sync: skill discovery for truncated lists
+### Added
+- Base instructions: Skill discovery guidance — when the visible skill list doesn't match a user's request, use `tool_search_tool_regex` to search for hidden skills before giving up
+
+## [2026-03-13] - Upstream sync: save state session naming
+### Added
+- Base instructions: Save/restore flows now derive a session title from the project folder plus the current date in `MM-DD-YY` format, record it in `.copilot/session-state.md`, and surface the exact `/rename` command for the user
+- README: Save State Protocol now documents the session naming convention and `/rename` guidance
+
 ## [2026-03-10] - Upstream sync: Save State Protocol
 ### Added
 - Base instructions: Save State Protocol — structured `.copilot/session-state.md` in project folders with session history, machine context, and resume instructions

@@ -351,18 +351,21 @@ This configuration adds a structured state-saving system that goes beyond what C
 - **Actionable items** — in-progress tasks, completed work, and next steps with enough detail to resume without context
 - **Open issues** — which GitHub issues are being actively worked
 - **Uncommitted changes** — so you know if something was left hanging
+- **Session naming target** — the expected Copilot CLI session title and exact `/rename` command using `<project-folder>-<MM-DD-YY>`
 
 ### How it works
 
 | Trigger | Behavior |
 |---------|----------|
-| "save my state" / "save my progress" | Writes/updates `.copilot/session-state.md` immediately |
+| "save my state" / "save my progress" | Writes/updates `.copilot/session-state.md` immediately and gives you the exact `/rename <project-folder>-<MM-DD-YY>` command |
 | After completing an issue or committing | Auto-saves at natural checkpoints |
-| Opening a project with existing state | Agent offers: "Last session [date] on [machine]: [status]. Pick up where you left off?" |
+| Opening a project with existing state | Agent offers a saved-state summary, restores context, and gives you the current session's `/rename <project-folder>-<MM-DD-YY>` command |
 
 ### Why this matters
 
 If a session is lost (machine restart, context window cleared, session can't be resumed), the state file preserves everything needed to continue. It lives in the project folder — not the session store — so it survives even a full Copilot CLI reinstall.
+
+Copilot CLI supports `/rename`, but the agent cannot invoke slash commands on your behalf. This protocol closes that gap by calculating the correct session name for you and recording the exact command in the state file.
 
 > **Note:** `.copilot/` in project folders is gitignored by default — it's local working state, not repo content.
 
@@ -372,7 +375,8 @@ Quick reference for common operations:
 
 | Task | Command / Action |
 |------|-----------------|
-| **Save session state** | Say "save my state" or auto-saves at checkpoints → writes `.copilot/session-state.md` |
+| **Save session state** | Say "save my state" or auto-saves at checkpoints → writes `.copilot/session-state.md` and gives you a `/rename <project-folder>-<MM-DD-YY>` command |
+| **Rename current session** | Run `/rename <project-folder>-<MM-DD-YY>` when prompted during save/restore |
 | **Switch persona** | Say "switch to productivity" or run `Switch-CopilotPersona.ps1 -Persona productivity` |
 | **List personas** | `Switch-CopilotPersona.ps1 -List` |
 | **Check for sync updates** | Say "check for updates" in Copilot CLI |
