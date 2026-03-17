@@ -196,6 +196,166 @@ function Resolve-Template {
     return $content
 }
 
+function Merge-McpConfig {
+    <#
+    .SYNOPSIS
+        Merge repo MCP config into an existing deployed config, preserving locally-added servers.
+    .PARAMETER SourcePath
+        Path to the repo MCP config file (the incoming source of truth).
+    .PARAMETER TargetPath
+        Path to the deployed MCP config file to merge into.
+    .PARAMETER ServerKey
+        JSON property containing the servers object ("mcpServers" for CLI, "servers" for VS Code).
+    .PARAMETER SidecarKey
+        Key in the sidecar file to track repo-origin servers ("cli" or "vscode").
+    .PARAMETER DryRun
+        If true, report what would change without writing.
+    .RETURNS
+        Hashtable with keys: Added, Updated, Preserved, Removed (arrays of server names).
+    #>
+    param(
+        [string]$SourcePath,
+        [string]$TargetPath,
+        [string]$ServerKey,
+        [string]$SidecarKey,
+        [switch]$DryRun
+    )
+
+    $sidecarPath = "$copilotDir\mcp-repo-servers.json"
+    $result = @{ Added = @(); Updated = @(); Preserved = @(); Removed = @() }
+
+    # Read repo source
+    $sourceJson = Get-Content $SourcePath -Raw | ConvertFrom-Json -Depth 10
+    $sourceServers = @{}
+    if ($sourceJson.PSObject.Properties[$ServerKey]) {
+        $sourceJson.$ServerKey.PSObject.Properties | ForEach-Object { $sourceServers[$_.Name] = $_.Value }
+    }
+    $repoServerNames = @($sourceServers.Keys)
+
+    # If target doesn't exist, straight copy + create sidecar
+    if (-not (Test-Path $TargetPath)) {
+        if (-not $DryRun) {
+            Copy-Item $SourcePath $TargetPath -Force
+        }
+        $result.Added = $repoServerNames
+        Update-McpSidecar -SidecarPath $sidecarPath -SidecarKey $SidecarKey -ServerNames $repoServerNames -DryRun:$DryRun
+        return $result
+    }
+
+    # Read existing deployed config
+    try {
+        $targetJson = Get-Content $TargetPath -Raw | ConvertFrom-Json -Depth 10
+    } catch {
+        Write-Host "  ⚠️  Existing $($TargetPath | Split-Path -Leaf) has invalid JSON — overwriting" -ForegroundColor Yellow
+        if (-not $DryRun) {
+            Copy-Item $SourcePath $TargetPath -Force
+        }
+        $result.Added = $repoServerNames
+        Update-McpSidecar -SidecarPath $sidecarPath -SidecarKey $SidecarKey -ServerNames $repoServerNames -DryRun:$DryRun
+        return $result
+    }
+
+    $targetServers = @{}
+    if ($targetJson.PSObject.Properties[$ServerKey]) {
+        $targetJson.$ServerKey.PSObject.Properties | ForEach-Object { $targetServers[$_.Name] = $_.Value }
+    }
+
+    # Load sidecar to identify previously-deployed repo servers
+    $previousRepoServers = @()
+    if (Test-Path $sidecarPath) {
+        try {
+            $sidecar = Get-Content $sidecarPath -Raw | ConvertFrom-Json -Depth 10
+            if ($sidecar.PSObject.Properties[$SidecarKey]) {
+                $previousRepoServers = @($sidecar.$SidecarKey)
+            }
+        } catch {
+            # Corrupt sidecar — treat as first run
+        }
+    }
+
+    # Build merged server set — preserve existing key order for idempotency
+    $merged = [ordered]@{}
+
+    # 1. Start with target order: update repo servers in-place, preserve locals
+    foreach ($name in @($targetJson.$ServerKey.PSObject.Properties.Name)) {
+        if ($sourceServers.ContainsKey($name)) {
+            # Repo server — update with repo version
+            $merged[$name] = $sourceServers[$name]
+            $result.Updated += $name
+        } elseif ($previousRepoServers -contains $name) {
+            # Was a repo server previously, now removed from repo — drop it
+            $result.Removed += $name
+        } else {
+            # Local addition — preserve
+            $merged[$name] = $targetServers[$name]
+            $result.Preserved += $name
+        }
+    }
+
+    # 2. Add any new repo servers not already in target
+    foreach ($name in $repoServerNames) {
+        if (-not $merged.Contains($name)) {
+            $merged[$name] = $sourceServers[$name]
+            $result.Added += $name
+        }
+    }
+
+    # Write merged config
+    if (-not $DryRun) {
+        # Rebuild the JSON object preserving non-server properties
+        $outputObj = [ordered]@{}
+        foreach ($prop in $targetJson.PSObject.Properties) {
+            if ($prop.Name -eq $ServerKey) {
+                $outputObj[$ServerKey] = $merged
+            } else {
+                $outputObj[$prop.Name] = $prop.Value
+            }
+        }
+        # Ensure server key exists even if target didn't have it
+        if (-not $outputObj.Contains($ServerKey)) {
+            $outputObj[$ServerKey] = $merged
+        }
+        $outputObj | ConvertTo-Json -Depth 10 | Set-Content $TargetPath -Encoding UTF8
+    }
+
+    # Update sidecar
+    Update-McpSidecar -SidecarPath $sidecarPath -SidecarKey $SidecarKey -ServerNames $repoServerNames -DryRun:$DryRun
+
+    return $result
+}
+
+function Update-McpSidecar {
+    param(
+        [string]$SidecarPath,
+        [string]$SidecarKey,
+        [string[]]$ServerNames,
+        [switch]$DryRun
+    )
+    if ($DryRun) { return }
+
+    $sidecar = [ordered]@{}
+    if (Test-Path $SidecarPath) {
+        try {
+            $existing = Get-Content $SidecarPath -Raw | ConvertFrom-Json -Depth 10
+            foreach ($prop in $existing.PSObject.Properties) {
+                $sidecar[$prop.Name] = $prop.Value
+            }
+        } catch {
+            # Start fresh if corrupt
+        }
+    }
+    $sidecar[$SidecarKey] = $ServerNames
+    $sidecar | ConvertTo-Json -Depth 10 | Set-Content $SidecarPath -Encoding UTF8
+}
+
+function Format-McpMergeResult {
+    param([hashtable]$Result, [string]$Label)
+    if ($Result.Added.Count -gt 0) { Write-Info "$Label — Added: $($Result.Added -join ', ')" }
+    if ($Result.Updated.Count -gt 0) { Write-Info "$Label — Updated: $($Result.Updated -join ', ')" }
+    if ($Result.Preserved.Count -gt 0) { Write-Info "$Label — Preserved (local): $($Result.Preserved -join ', ')" }
+    if ($Result.Removed.Count -gt 0) { Write-Info "$Label — Removed (dropped from repo): $($Result.Removed -join ', ')" }
+}
+
 # ============================================================
 # Main Script
 # ============================================================
@@ -734,21 +894,25 @@ if ($Mode -eq "consume") {
     Write-Host ""
     Write-Host "  📡 MCP Server Configuration" -ForegroundColor Cyan
 
-    # CLI MCP
+    # CLI MCP — merge repo config with locally-added servers
     if ($clients -contains "cli") {
         $mcpSource = "$repoRoot\mcp\mcp-config.$mcpProfile.json"
         if (-not (Test-Path $mcpSource)) { $mcpSource = "$repoRoot\mcp\mcp-config.universal.json" }
         if (Test-Path $mcpSource) {
+            $cliTarget = "$copilotDir\mcp-config.json"
             if ($DryRun) {
-                Write-Info "[DRY RUN] Would deploy CLI MCP config"
+                Write-Info "[DRY RUN] CLI MCP merge plan ($mcpProfile):"
+                $mergeResult = Merge-McpConfig -SourcePath $mcpSource -TargetPath $cliTarget -ServerKey "mcpServers" -SidecarKey "cli" -DryRun
+                Format-McpMergeResult -Result $mergeResult -Label "CLI"
             } else {
-                Copy-Item $mcpSource "$copilotDir\mcp-config.json" -Force
-                Write-Success "CLI MCP config deployed ($mcpProfile)"
+                $mergeResult = Merge-McpConfig -SourcePath $mcpSource -TargetPath $cliTarget -ServerKey "mcpServers" -SidecarKey "cli"
+                Write-Success "CLI MCP config merged ($mcpProfile)"
+                Format-McpMergeResult -Result $mergeResult -Label "CLI"
             }
         }
     }
 
-    # VS Code MCP
+    # VS Code MCP — merge repo config with locally-added servers
     if ($clients -contains "vscode" -or $clients -contains "vscode-insiders") {
         $vscodeMcpSource = "$repoRoot\mcp\mcp.vscode.universal.json"
         if (Test-Path $vscodeMcpSource) {
@@ -756,11 +920,15 @@ if ($Mode -eq "consume") {
             if ($clients -contains "vscode") { $targets += "$env:APPDATA\Code\User\mcp.json" }
             if ($clients -contains "vscode-insiders") { $targets += "$env:APPDATA\Code - Insiders\User\mcp.json" }
             foreach ($t in $targets) {
+                $tName = ($t | Split-Path -Parent | Split-Path -Leaf)
                 if ($DryRun) {
-                    Write-Info "[DRY RUN] Would deploy VS Code MCP to $t"
+                    Write-Info "[DRY RUN] VS Code MCP merge plan ($tName):"
+                    $mergeResult = Merge-McpConfig -SourcePath $vscodeMcpSource -TargetPath $t -ServerKey "servers" -SidecarKey "vscode" -DryRun
+                    Format-McpMergeResult -Result $mergeResult -Label "VS Code ($tName)"
                 } else {
-                    Copy-Item $vscodeMcpSource $t -Force
-                    Write-Success "VS Code MCP deployed to $t"
+                    $mergeResult = Merge-McpConfig -SourcePath $vscodeMcpSource -TargetPath $t -ServerKey "servers" -SidecarKey "vscode"
+                    Write-Success "VS Code MCP merged ($tName)"
+                    Format-McpMergeResult -Result $mergeResult -Label "VS Code ($tName)"
                 }
             }
         }

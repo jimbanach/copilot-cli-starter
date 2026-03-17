@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - Base instructions: Skill discovery guidance — when the visible skill list doesn't match a user's request, use `tool_search_tool_regex` to search for hidden skills before giving up
 
+## [2026-03-17] - Upstream sync: MCP config merge instead of overwrite
+### Fixed
+- `init.ps1` now uses JSON-aware merge for MCP configs instead of destructive overwrite
+- Locally-added MCP servers are preserved across `init.ps1` runs
+- Sidecar file tracks repo-origin servers for removal detection
+- DryRun shows detailed merge plan (added/updated/preserved/removed)
+### Changed
+- `docs/init-script-details.md` updated to reflect actual merge behavior
+
 ## [2026-03-13] - Upstream sync: save state session naming
 ### Added
 - Base instructions: Save/restore flows now derive a session title from the project folder plus the current date in `MM-DD-YY` format, record it in `.copilot/session-state.md`, and surface the exact `/rename` command for the user

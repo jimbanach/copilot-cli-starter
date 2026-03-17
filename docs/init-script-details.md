@@ -58,9 +58,17 @@ For each content category (personas, skills, agents, scripts), you choose one of
 
 ### 7. Deploy MCP Config
 
-Deploys MCP server configurations:
-- **CLI:** merges universal + instance-specific configs into `~/.copilot/mcp-config.json`
-- **VS Code:** writes to `%APPDATA%/Code/User/mcp.json`
+Deploys MCP server configurations using a **JSON-aware merge** that preserves locally-added servers:
+- **CLI:** Merges repo profile config (`mcp-config.{profile}.json`) into `~/.copilot/mcp-config.json`
+- **VS Code:** Merges `mcp.vscode.universal.json` into `%APPDATA%/Code/User/mcp.json`
+
+**Merge semantics:**
+- Repo-defined servers are added or updated (repo is source of truth)
+- Locally-added servers (not in repo) are preserved
+- Servers removed from the repo since the last deploy are cleaned up
+- A sidecar file (`~/.copilot/mcp-repo-servers.json`) tracks which servers came from the repo
+
+On first deploy (no existing file), falls back to a straight copy. If the existing file has invalid JSON, it warns and overwrites.
 
 ### 8. Set Environment Variable & VS Code Settings
 
