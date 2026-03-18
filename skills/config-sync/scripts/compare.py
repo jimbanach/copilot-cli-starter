@@ -7,14 +7,17 @@ Returns JSON with categorized results:
 - local_only: files locally but not in repo
 - identical: files that match
 
+Also compares rendered templates against live deployed files (templates category).
+
 Usage:
-    python compare.py <repo_path> [--copilot-dir <path>] [--json] [--categories personas,skills,agents,scripts]
+    python compare.py <repo_path> [--copilot-dir <path>] [--json] [--categories personas,skills,agents,scripts,templates]
 """
 
 import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -106,6 +109,233 @@ CATEGORIES = {
         'exclude_dirs': [],
     },
 }
+
+
+# Template manifest: maps repo templates to their deployed destinations
+# Variable sources: 'config.<key>' reads from instance-config.json,
+# '@<name>' are computed at runtime
+TEMPLATE_MANIFEST = [
+    {
+        'name': 'base-instructions',
+        'template': 'base/copilot-instructions.md.template',
+        'destination': 'copilot-instructions.md',
+        'variables': {
+            'USER_NAME': 'config.user_display_name',
+            'WORKSPACE_PATH': 'config.workspace_path',
+            'GITHUB_PROJECTS_PATH': 'config.github_projects_path',
+            'COPILOT_DIR': '@copilot_dir',
+            'ENVIRONMENTS': '@environments',
+            'PERSONA_LIST': '@persona_list',
+        },
+    },
+    {
+        'name': 'instance-rules',
+        'template': 'base/instance-rules/{instance_name}.instructions.md',
+        'destination': 'personas/active/.github/instructions/instance.instructions.md',
+        'variables': {
+            'WORKSPACE_PATH': 'config.workspace_path',
+            'GITHUB_ACCOUNT': 'config.github_account',
+            'DESKTOP_PATH': 'config.known_folders.desktop',
+            'DOCUMENTS_PATH': 'config.known_folders.documents',
+        },
+    },
+]
+
+
+def load_instance_config(repo_path):
+    """Load instance-config.json from the repo root."""
+    config_path = os.path.join(repo_path, 'instance-config.json')
+    if not os.path.exists(config_path):
+        return None
+    with open(config_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def resolve_config_value(config, dotpath):
+    """Resolve a dot-separated path like 'known_folders.desktop' from config."""
+    keys = dotpath.split('.')
+    val = config
+    for key in keys:
+        if isinstance(val, dict) and key in val:
+            val = val[key]
+        else:
+            return None
+    return str(val)
+
+
+def compute_template_variables(manifest_entry, config, repo_path, copilot_dir):
+    """Build the full variable dict for a template, resolving config and computed values."""
+    variables = {}
+    for var_name, source in manifest_entry['variables'].items():
+        if source.startswith('config.'):
+            config_key = source[len('config.'):]
+            val = resolve_config_value(config, config_key)
+            if val is not None:
+                variables[var_name] = val
+        elif source == '@copilot_dir':
+            variables[var_name] = copilot_dir
+        elif source == '@environments':
+            display_name = config.get('user_display_name', 'User')
+            envs = config.get('available_environments', [])
+            variables[var_name] = f"{display_name} has {', '.join(envs)} available"
+        elif source == '@persona_list':
+            personas_dir = os.path.join(repo_path, 'personas')
+            persona_names = []
+            if os.path.isdir(personas_dir):
+                for d in sorted(os.listdir(personas_dir)):
+                    agents_file = os.path.join(personas_dir, d, 'AGENTS.md')
+                    if os.path.isdir(os.path.join(personas_dir, d)) and os.path.exists(agents_file):
+                        persona_names.append(d)
+            variables[var_name] = ', '.join(persona_names)
+    return variables
+
+
+def resolve_template(template_path, variables):
+    """Render a template by replacing {{VAR}} placeholders with values."""
+    with open(template_path, 'r', encoding='utf-8', errors='replace') as f:
+        content = f.read()
+    for key, value in variables.items():
+        content = content.replace('{{' + key + '}}', value)
+    return content
+
+
+def resolve_template_path(template_rel_path, config):
+    """Resolve template path placeholders like {instance_name}."""
+    return template_rel_path.replace('{instance_name}', config.get('instance_name', 'personal'))
+
+
+def compare_templates(repo_path, copilot_dir):
+    """Compare rendered templates against live deployed files."""
+    results = {'new_in_repo': [], 'modified': [], 'local_only': [], 'identical': []}
+
+    config = load_instance_config(repo_path)
+    if config is None:
+        return results
+
+    for entry in TEMPLATE_MANIFEST:
+        template_rel = resolve_template_path(entry['template'], config)
+        template_path = os.path.join(repo_path, template_rel)
+        dest_path = os.path.join(copilot_dir, entry['destination'])
+
+        if not os.path.exists(template_path):
+            continue
+
+        variables = compute_template_variables(entry, config, repo_path, copilot_dir)
+        rendered = resolve_template(template_path, variables)
+
+        if not os.path.exists(dest_path):
+            results['new_in_repo'].append(entry['name'])
+            continue
+
+        # Compare rendered template to live file (line-ending tolerant)
+        rendered_lines = [l.rstrip('\r\n') for l in rendered.splitlines()]
+        with open(dest_path, 'r', encoding='utf-8', errors='replace') as f:
+            live_lines = [l.rstrip('\r\n') for l in f.read().splitlines()]
+
+        if rendered_lines == live_lines:
+            results['identical'].append(entry['name'])
+        else:
+            results['modified'].append(entry['name'])
+
+    return results
+
+
+def show_template_diff(repo_path, copilot_dir, item_name):
+    """Show diff between rendered template and live deployed file."""
+    config = load_instance_config(repo_path)
+    if config is None:
+        print("  ⚠️  No instance-config.json found — cannot render templates")
+        return
+
+    entry = next((e for e in TEMPLATE_MANIFEST if e['name'] == item_name), None)
+    if entry is None:
+        print(f"  Unknown template: {item_name}")
+        print(f"  Available: {', '.join(e['name'] for e in TEMPLATE_MANIFEST)}")
+        return
+
+    template_rel = resolve_template_path(entry['template'], config)
+    template_path = os.path.join(repo_path, template_rel)
+    dest_path = os.path.join(copilot_dir, entry['destination'])
+
+    if not os.path.exists(template_path):
+        print(f"  ⚠️  Template not found: {template_rel}")
+        return
+
+    variables = compute_template_variables(entry, config, repo_path, copilot_dir)
+    rendered = resolve_template(template_path, variables)
+
+    # Check for unresolved variables
+    unresolved = re.findall(r'\{\{(\w+)\}\}', rendered)
+    if unresolved:
+        print(f"  ⚠️  Unresolved variables: {', '.join(set(unresolved))}")
+
+    if not os.path.exists(dest_path):
+        print(f"\n  🆕 {item_name} — live file doesn't exist yet")
+        print(f"     Would deploy to: {dest_path}")
+        for line in rendered.splitlines()[:20]:
+            print(f"  + {line}")
+        if len(rendered.splitlines()) > 20:
+            print(f"  ... ({len(rendered.splitlines()) - 20} more lines)")
+        return
+
+    rendered_lines = [l.rstrip('\r\n') for l in rendered.splitlines()]
+    with open(dest_path, 'r', encoding='utf-8', errors='replace') as f:
+        live_lines = [l.rstrip('\r\n') for l in f.read().splitlines()]
+
+    if rendered_lines == live_lines:
+        print(f"\n  ✅ {item_name} — live file matches rendered template")
+        return
+
+    import difflib
+    diff = list(difflib.unified_diff(live_lines, rendered_lines, lineterm='',
+                                     fromfile='live', tofile='rendered', n=3))
+    print(f"\n  ⚠️  {item_name} — template has changed since last render")
+    print(f"     Template: {template_rel}")
+    print(f"     Live:     {dest_path}\n")
+    for line in diff[:60]:
+        if line.startswith('+') and not line.startswith('+++'):
+            print(f"    {line}")
+        elif line.startswith('-') and not line.startswith('---'):
+            print(f"    {line}")
+        elif line.startswith('@@'):
+            print(f"    {line}")
+    if len(diff) > 60:
+        print(f"    ... ({len(diff) - 60} more lines)")
+
+
+def apply_template(repo_path, copilot_dir, item_name):
+    """Render a template and write it to the destination."""
+    config = load_instance_config(repo_path)
+    if config is None:
+        print("  ⚠️  No instance-config.json found")
+        return False
+
+    entry = next((e for e in TEMPLATE_MANIFEST if e['name'] == item_name), None)
+    if entry is None:
+        print(f"  Unknown template: {item_name}")
+        return False
+
+    template_rel = resolve_template_path(entry['template'], config)
+    template_path = os.path.join(repo_path, template_rel)
+    dest_path = os.path.join(copilot_dir, entry['destination'])
+
+    if not os.path.exists(template_path):
+        print(f"  ⚠️  Template not found: {template_rel}")
+        return False
+
+    variables = compute_template_variables(entry, config, repo_path, copilot_dir)
+    rendered = resolve_template(template_path, variables)
+
+    # Check for unresolved variables
+    unresolved = re.findall(r'\{\{(\w+)\}\}', rendered)
+    if unresolved:
+        print(f"  ⚠️  Warning: unresolved variables: {', '.join(set(unresolved))}")
+
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    with open(dest_path, 'w', encoding='utf-8', newline='') as f:
+        f.write(rendered)
+    print(f"  ✅ Rendered {item_name} → {dest_path}")
+    return True
 
 
 def compare_directory_items(repo_dir, local_dir, key_file, exclude_dirs):
@@ -231,11 +461,15 @@ def compare_file_items(repo_dir, local_dir, pattern, exclude_dirs=None):
 def run_comparison(repo_path, copilot_dir, categories=None):
     """Run full comparison across all categories."""
     if categories is None:
-        categories = list(CATEGORIES.keys())
+        categories = list(CATEGORIES.keys()) + ['templates']
 
     all_results = {}
 
     for cat_name in categories:
+        if cat_name == 'templates':
+            all_results['templates'] = compare_templates(repo_path, copilot_dir)
+            continue
+
         if cat_name not in CATEGORIES:
             continue
 
@@ -311,6 +545,10 @@ def print_summary(results):
 
 def show_diff(repo_path, copilot_dir, category, item_name):
     """Show detailed diff for a specific item."""
+    if category == 'templates':
+        show_template_diff(repo_path, copilot_dir, item_name)
+        return
+
     if category not in CATEGORIES:
         print(f"Unknown category: {category}")
         return
@@ -410,10 +648,14 @@ def main():
                         help='Comma-separated list of categories to compare')
     parser.add_argument('--diff', nargs=2, metavar=('CATEGORY', 'ITEM'),
                         help='Show detailed diff for a specific item (e.g., --diff skills research)')
+    parser.add_argument('--apply-template', metavar='NAME',
+                        help='Render and deploy a template (e.g., --apply-template base-instructions)')
 
     args = parser.parse_args()
 
-    if args.diff:
+    if args.apply_template:
+        apply_template(args.repo_path, args.copilot_dir, args.apply_template)
+    elif args.diff:
         show_diff(args.repo_path, args.copilot_dir, args.diff[0], args.diff[1])
     else:
         categories = args.categories.split(',') if args.categories else None

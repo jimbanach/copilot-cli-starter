@@ -219,6 +219,28 @@ columnWidths: [7000, 2360]  // Must sum to table width
 
 ### Images
 
+Custom images can be generated using the `image-gen` MCP tools (`generate_image`, `edit_image`) when no suitable image exists.
+
+**⚠️ Cost-conscious generation — propose before creating:**
+
+Every image generation costs money. **Do not generate images speculatively.** Follow this workflow:
+
+1. **Build the document with a placeholder first.** Insert a paragraph describing the intended image in brackets (e.g., *"[Image: Technical diagram showing three-tier architecture with load balancer, app servers, and database layer — white background, clean labels, 1536×1024]"*).
+2. **Present the proposal to the user.** Show them the placeholder descriptions and ask: "I'd like to generate these images — do these descriptions work?"
+3. **Generate only after confirmation.** Once the user approves, generate and insert.
+4. **One image at a time.** Don't batch-generate. Generate, confirm, move on.
+
+**Skip the proposal step only when:**
+- The user explicitly asked for a specific image (e.g., "add a diagram of the network topology")
+- The user said "go ahead and generate whatever images you need"
+
+**Recommended parameters for documents:**
+- **Figures/illustrations**: `size: "1024x1024"` or `size: "1536x1024"` (landscape), `quality: "high"`
+- **Icons/logos**: `size: "1024x1024"`, `background: "transparent"`, `output_format: "png"`
+- **Drafts/iteration**: Use `quality: "medium"` while iterating, `"high"` for the final version
+- **Prompt style**: "Technical diagram style, clear labels, white background, [subject]" for figures; adjust for the document's tone
+- **Variants**: Only use `n: 2+` if the user explicitly asks for options
+
 ```javascript
 // CRITICAL: type parameter is REQUIRED
 new Paragraph({

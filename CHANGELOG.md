@@ -3,6 +3,17 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2026-03-18] - Upstream sync: multiple improvements
+### Added
+- `init.ps1`: Auto-detect available environments — native, WSL, Docker (fixes #18)
+- New `image-generation` skill for AI image workflows via MCP
+- New `meeting-processing` skill for meeting transcript/notes processing
+- Updated `meeting-transcript-processor` agent with significant improvements
+- New `squad-setup` agent and bootstrap script
+- Updated `config-sync` skill with template rendering and expanded compare.py
+- Updated `content-drafting`, `docx`, `pptx` skills with new capabilities
+- New `code-coach` persona for educational coding projects
+
 ## [2026-03-17] - Upstream sync: session resume auto-restores project context
 ### Added
 - Base instructions: On resume, agent now prompts `/cwd` if working directory changed, reads `.github/copilot-instructions.md` into context, and loads the correct persona from `project.json`

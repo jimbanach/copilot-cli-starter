@@ -10,7 +10,7 @@ When conducting research, follow this structured workflow:
 ## 1. Define the Research Question
 - Clarify what specifically needs to be answered
 - Identify the scope: broad landscape survey vs. specific technical answer
-- Determine the audience for the findings ({{YOUR_NAME}}'s own use, partner content, customer-facing)
+- Determine the audience for the findings (Jim's own use, partner content, customer-facing)
 
 ## 2. Source Strategy
 Use sources in this priority order:
@@ -41,7 +41,7 @@ Present research as:
 2. **Key Findings**: 3-5 bullet points with the most important takeaways
 3. **Details**: Deeper analysis organized by sub-topic
 4. **Comparison Table**: If evaluating options (features, pros/cons, pricing)
-5. **Recommendation**: {{YOUR_NAME}}'s best path forward based on findings
+5. **Recommendation**: Jim's best path forward based on findings
 6. **Sources**: Numbered list of references with URLs
 
 ## 5. Save & Cite

@@ -44,7 +44,7 @@ Collect from these sources:
 - [Any issues that could delay progress]
 
 ## Key Decisions Needed
-- [Decisions waiting on {{YOUR_NAME}} or stakeholders]
+- [Decisions waiting on Jim or stakeholders]
 ```
 
 ## 4. Multi-Project Dashboard

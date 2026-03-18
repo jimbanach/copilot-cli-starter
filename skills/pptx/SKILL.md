@@ -87,6 +87,42 @@ Use when no template or reference presentation is available.
 
 ---
 
+## AI-Generated Images
+
+Custom images can be generated using the `image-gen` MCP tools (`generate_image`, `edit_image`). Use this for hero images, backgrounds, icons, illustrations, or any visual that doesn't already exist as a file.
+
+**⚠️ Cost-conscious generation — propose before creating:**
+
+Every image generation costs money. **Do not generate images speculatively.** Follow this workflow:
+
+1. **Build the slide with a placeholder first.** Insert a text box or shape where the image would go, containing an alt-text-style description of what you'd generate (e.g., *"[Image: Photorealistic aerial view of a modern data center at dusk, warm lighting, corporate feel — landscape 1536×1024]"*).
+2. **Present the proposal to the user.** Show the slide layout with the placeholder description and ask: "I'd suggest generating this image — does this work, or would you like something different?"
+3. **Generate only after confirmation.** Once the user approves (or adjusts) the description, generate the image and insert it.
+4. **One image at a time.** Don't batch-generate multiple images in parallel. Generate, confirm it works, then move to the next.
+
+**Skip the proposal step only when:**
+- The user explicitly asked for a specific image (e.g., "add a hero image of a mountain sunset")
+- The user said "go ahead and generate whatever images you need"
+
+**Recommended parameters for presentations:**
+- **Hero/background images**: `size: "1536x1024"` (landscape), `quality: "high"`
+- **Icons/logos**: `size: "1024x1024"`, `background: "transparent"`, `output_format: "png"`
+- **Drafts/iteration**: Use `quality: "medium"` while iterating, switch to `"high"` for the final version
+- **Prompt style**: "Professional, clean, corporate style, simple composition, [subject]" — keep it slide-appropriate
+- **Variants**: Only use `n: 2+` if the user explicitly asks for options
+
+**Workflow integration:**
+1. Generate the approved image using the image-gen MCP tools
+2. Use the returned file path directly in `addImage()` (pptxgenjs) or copy into the unpacked media folder (template editing)
+3. For template-based editing, add the generated image to `ppt/media/`, create the relationship in `_rels/`, and reference via `r:embed`
+
+**When to generate vs. use existing assets:**
+- Generate when no suitable image exists and the user hasn't provided one
+- If the user says "add an image of X" without providing a file, propose a description and confirm before generating
+- For Microsoft-branded content, prefer official photography/assets when available; generate for custom illustrations or conceptual visuals
+
+---
+
 ## Design Ideas
 
 **Don't create boring slides.** Plain bullets on a white background won't impress anyone. Consider ideas from this list for each slide.

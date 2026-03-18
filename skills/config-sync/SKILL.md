@@ -52,7 +52,22 @@ Manages bidirectional sync between the local `~/.copilot/` setup and the `copilo
 ✅ Identical: 42 items
 ```
 
-5. Present the user with structured options (do NOT ask freeform — use numbered choices):
+5. Run `scripts/compare.py` with `--categories templates` to check for template drift
+6. If any templates show as `modified`, present them:
+
+```
+📄 Templates needing re-render:
+   ⚠️  base-instructions — template updated since last render
+   ⚠️  instance-rules — template updated since last render
+```
+
+   For each modified template:
+   - Show the diff: `compare.py <repo> --diff templates <name>` (e.g., `--diff templates base-instructions`)
+   - Ask: `[1] Re-render  [2] Skip  [3] Show Diff`
+   - If "Re-render": `compare.py <repo> --apply-template <name>` (e.g., `--apply-template base-instructions`)
+   - If user has a session reload needed (base instructions changed), remind them: "Base instructions updated — restart your Copilot CLI session to pick up changes."
+
+7. Present the user with structured options (do NOT ask freeform — use numbered choices):
 
 ```
 What would you like to do?
@@ -61,13 +76,13 @@ What would you like to do?
   [3] Review Each — step through items one at a time (Incorporate / Skip / Show Diff)
 ```
 
-6. If "Review Each": for each non-identical item, show the item name and status, then ask:
+8. If "Review Each": for each non-identical item, show the item name and status, then ask:
 ```
   [1] Incorporate  [2] Skip  [3] Show Diff
 ```
    If "Show Diff": use `compare.py --diff <category> <item_name>` to show the actual differences, then re-prompt with Incorporate/Skip.
 
-7. Update `sync-state.json` with decisions (record skips with reason)
+9. Update `sync-state.json` with decisions (record skips with reason)
 
 ## Workflow 2: Share My Setup
 
@@ -95,7 +110,7 @@ Changes to push to 'work' branch:
    • skills/my-new-skill/SKILL.md contains 'OneDrive - Microsoft'
 ```
 
-4. {{YOUR_NAME}} approves per-file or per-category
+4. Jim approves per-file or per-category
 5. Commit and push to the instance branch (work/personal)
 6. Update `sync-state.json`
 
@@ -106,7 +121,7 @@ Changes to push to 'work' branch:
 **Steps:**
 1. Compare the current instance branch against `main`
 2. Show changes that exist on the instance branch but not on main
-3. {{YOUR_NAME}} selects which changes to promote
+3. Jim selects which changes to promote
 4. Create a commit on `main` (or a PR if preferred)
 5. Push to `origin/main`
 
@@ -128,7 +143,7 @@ Changes to push to 'work' branch:
 
 Instance:     work
 Branch:       work
-GitHub acct:  {{YOUR_NAME}}banach ✅
+GitHub acct:  jimbanach ✅
 Last pull:    2026-03-01 12:30 UTC
 Last push:    2026-03-01 10:15 UTC
 
@@ -152,7 +167,7 @@ Last push:    2026-03-01 10:15 UTC
 **Steps:**
 1. Run `scripts/sanitize.py` against the `main` branch content
 2. Show what will be published with a diff preview vs current template repo
-3. {{YOUR_NAME}} reviews and approves
+3. Jim reviews and approves
 4. Commit and push to `copilot-cli-starter` repo
 5. Update CHANGELOG.md in both repos
 
@@ -163,7 +178,7 @@ Location: `~/.copilot/.copilot-sync/sync-state.json` (gitignored, never shared)
 ```json
 {
   "instance": "work",
-  "repo_path": "C:\\Users\\{{YOUR_NAME}}banach\\copilot-cli-config",
+  "repo_path": "C:\\Users\\jimbanach\\copilot-cli-config",
   "last_pull": "2026-03-01T12:30:00Z",
   "last_push": "2026-03-01T10:15:00Z",
   "skipped_items": [
@@ -183,11 +198,14 @@ Location: `~/.copilot/.copilot-sync/sync-state.json` (gitignored, never shared)
 All scripts are located in **this skill's directory**: `~/.copilot/skills/config-sync/scripts/` (locally) or `skills/config-sync/scripts/` (in the repo). Always run them from the skill's scripts directory, NOT from the repo root.
 
 ### `scripts/compare.py`
-Computes diffs between local `~/.copilot/` and the repo. Returns JSON with categorized results (new, modified, identical, local-only). Uses line-by-line comparison to ignore CRLF/LF differences.
+Computes diffs between local `~/.copilot/` and the repo. Returns JSON with categorized results (new, modified, identical, local-only). Uses line-by-line comparison to ignore CRLF/LF differences. Also compares rendered templates against live deployed files.
 
 Usage:
 ```bash
 python ~/.copilot/skills/config-sync/scripts/compare.py <repo_path> [--copilot-dir <path>] [--json]
+python ~/.copilot/skills/config-sync/scripts/compare.py <repo_path> --categories templates  # check templates only
+python ~/.copilot/skills/config-sync/scripts/compare.py <repo_path> --diff templates base-instructions  # show template diff
+python ~/.copilot/skills/config-sync/scripts/compare.py <repo_path> --apply-template base-instructions  # re-render and deploy
 ```
 
 ### `scripts/sync_state.py`

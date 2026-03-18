@@ -86,6 +86,46 @@ function Detect-Clients {
     return $clients
 }
 
+function Detect-Environments {
+    $detected = [ordered]@{}
+
+    # Native is always available
+    $detected["native"] = @{ Available = $true; Detail = "always available" }
+
+    # WSL: check if wsl.exe exists and has at least one real distro (exclude Docker's internal distro)
+    try {
+        $wslOutput = & wsl.exe -l -q 2>$null
+        if ($LASTEXITCODE -eq 0 -and $wslOutput) {
+            # wsl -l -q outputs UTF-16 with embedded null bytes — strip them for reliable matching
+            $distros = @($wslOutput | Where-Object { $_.Trim() -ne "" } | ForEach-Object { ($_ -replace '\0','').Trim() } | Where-Object { $_ -ne "" -and $_ -notmatch '^docker-desktop' })
+            if ($distros.Count -gt 0) {
+                $distroName = $distros[0]
+                $detected["wsl"] = @{ Available = $true; Detail = "$distroName detected" }
+            } else {
+                $detected["wsl"] = @{ Available = $false; Detail = "no user distros found (only Docker backend)" }
+            }
+        } else {
+            $detected["wsl"] = @{ Available = $false; Detail = "not found" }
+        }
+    } catch {
+        $detected["wsl"] = @{ Available = $false; Detail = "not found" }
+    }
+
+    # Docker: check if docker CLI is available and daemon is responsive
+    try {
+        $dockerVersion = & docker --version 2>$null
+        if ($LASTEXITCODE -eq 0 -and $dockerVersion) {
+            $detected["docker"] = @{ Available = $true; Detail = ($dockerVersion -replace 'Docker version ', 'v') }
+        } else {
+            $detected["docker"] = @{ Available = $false; Detail = "not found" }
+        }
+    } catch {
+        $detected["docker"] = @{ Available = $false; Detail = "not found" }
+    }
+
+    return $detected
+}
+
 function Get-FileStatus {
     param([string]$RepoFile, [string]$LocalFile)
     if (-not (Test-Path $LocalFile)) { return "new" }
@@ -501,10 +541,26 @@ if (-not $instanceName) {
     $githubAccount = Read-Host "  GitHub account username (default: $defGithub)"
     if (-not $githubAccount) { $githubAccount = $defGithub }
 
-    $defEnv = if ($existingConfig) { $existingConfig.available_environments -join ', ' } else { "native" }
+    $defEnv = if ($existingConfig) { $existingConfig.available_environments -join ', ' } else { $null }
+    Write-Host ""
+    Write-Step "Detecting available environments..."
+    $detectedEnvs = Detect-Environments
+    foreach ($env in $detectedEnvs.Keys) {
+        $info = $detectedEnvs[$env]
+        if ($info.Available) {
+            Write-Host "      ✓ $env" -ForegroundColor Green -NoNewline
+            Write-Host "  ($($info.Detail))" -ForegroundColor DarkGray
+        } else {
+            Write-Host "      ✗ $env" -ForegroundColor DarkGray -NoNewline
+            Write-Host "  ($($info.Detail))" -ForegroundColor DarkGray
+        }
+    }
+    $autoDetected = @($detectedEnvs.Keys | Where-Object { $detectedEnvs[$_].Available }) -join ', '
+    $envDefault = if ($defEnv) { $defEnv } else { $autoDetected }
+    Write-Host ""
     Write-Host "  Options: native, wsl, docker (comma-separated)" -ForegroundColor DarkGray
-    $envChoices = Read-Host "  Available environments (default: $defEnv)"
-    if (-not $envChoices) { $envChoices = $defEnv }
+    $envChoices = Read-Host "  Available environments (default: $envDefault)"
+    if (-not $envChoices) { $envChoices = $envDefault }
     $environments = @(($envChoices -split ',').Trim())
 
     $defGhProjects = if ($existingConfig.github_projects_path) { $existingConfig.github_projects_path } else { "$env:USERPROFILE\GitHubProjects" }

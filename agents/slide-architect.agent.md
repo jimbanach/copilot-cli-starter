@@ -233,7 +233,7 @@ Group slides into logical sections based on:
 
 After generating the breakdown, tell the user:
 
-*"The breakdown is ready at [path]. You can add inline notes using the prefix '{{YOUR_NAME}} Note:' (or your preferred prefix) to flag changes, ideas, or questions. When you're done, I'll extract those notes into the change tracker."*
+*"The breakdown is ready at [path]. You can add inline notes using the prefix 'Jim Note:' (or your preferred prefix) to flag changes, ideas, or questions. When you're done, I'll extract those notes into the change tracker."*
 
 ---
 
@@ -241,7 +241,7 @@ After generating the breakdown, tell the user:
 
 When the user completes a review pass on a breakdown file:
 
-1. Scan the file for all inline notes (look for the agreed prefix, e.g., "{{YOUR_NAME}} Note:")
+1. Scan the file for all inline notes (look for the agreed prefix, e.g., "Jim Note:")
 2. Categorize each note: narrative change, slide update, new slide, removal, talk track rewrite, question
 3. Organize into the change tracker format
 4. Present a summary table of what was found
