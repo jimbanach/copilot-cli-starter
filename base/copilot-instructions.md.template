@@ -18,7 +18,7 @@ These instructions apply to all personas and sessions. They define workspace str
 - If they mention starting something new, suggest creating a project with `New-CopilotProject.ps1`
 - When {{USER_NAME}} confirms they're working in a specific project, then read its `.github/copilot-instructions.md` and `project.json` for context
 - **After switching to a project, prompt {{USER_NAME}} to update the CLI working directory** so the status bar reflects the repo/branch: suggest they run `/cwd <project-path>` (the agent cannot invoke slash commands directly)
-- **Per-project persona enforcement:** When opening a project, check the `persona` field in `project.json`. If it differs from the currently loaded persona (from `personas/active/AGENTS.md`), read the correct persona file from `~/.copilot/personas/<persona>/AGENTS.md` into context and announce: "This project uses the **[persona name]** persona — loading it now." Mid-session persona switches are temporary and do not update `project.json`.
+- **Per-project persona enforcement:** When opening a project, check the `persona` field in `project.json`. If it differs from the currently loaded persona (from `personas/active/.github/instructions/persona.instructions.md`), read the correct persona file from `~/.copilot/personas/<persona>/persona.instructions.md` into context and announce: "This project uses the **[persona name]** persona — loading it now." Mid-session persona switches are temporary and do not update `project.json`.
 - **Workstream tagging:** Every project includes a Tracked Workstreams section in its `copilot-instructions.md`. New projects start with a default `general` workstream. When setting up a new project, if the user describes multiple distinct workstreams or activities, populate the workstream table with appropriate short IDs instead of just `general`. Tag artifacts with `Workstreams:` metadata. If the right tag is unclear, ask.
 
 ### Project Storage Rules
@@ -44,7 +44,8 @@ These skills are auto-loaded when relevant, or can be invoked with `/skill-name`
 - **environment-advisor** — Recommend native Windows vs WSL vs Docker for a project
 - **switch-persona** — Switch persona mid-chat without restarting
 - **config-sync** — Review, compare, and sync Copilot CLI configuration between machines
-- **Skill discovery:** The visible skill list above may be incomplete. If a user's request doesn't match any listed skill, use `tool_search_tool_regex` to search for matching tools before concluding no relevant skill exists. If a match is found, invoke the corresponding skill.
+- **persona-creator** — Guided persona creation, evaluation, and iteration
+- **Skill discovery:**The visible skill list above may be incomplete. If a user's request doesn't match any listed skill, use `tool_search_tool_regex` to search for matching tools before concluding no relevant skill exists. If a match is found, invoke the corresponding skill.
 
 ### Personas
 {{USER_NAME}} can switch personas mid-session by saying "switch to [persona name]" or using the switch-persona skill. Available personas: {{PERSONA_LIST}}.

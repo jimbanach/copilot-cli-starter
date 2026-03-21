@@ -39,7 +39,7 @@ $instanceConfigTemplate = "$repoRoot\instance-config.template.json"
 
 # Component categories and their repo/local paths
 $categories = @(
-    @{ Name = "Personas"; RepoPath = "personas"; LocalPath = "personas"; Pattern = "*/AGENTS.md"; Description = "Role-specific persona files" }
+    @{ Name = "Personas"; RepoPath = "personas"; LocalPath = "personas"; Pattern = "*/persona.instructions.md"; Description = "Role-specific persona files" }
     @{ Name = "Skills";   RepoPath = "skills";   LocalPath = "skills";   Pattern = "*/SKILL.md";  Description = "Portable skills (CLI + VS Code)" }
     @{ Name = "Agents";   RepoPath = "agents";   LocalPath = "agents";   Pattern = "*.agent.md";  Description = "Custom agent profiles" }
     @{ Name = "Scripts";  RepoPath = "scripts";  LocalPath = ".";        Pattern = "*.ps1";       Description = "Utility scripts" }
@@ -470,7 +470,7 @@ if ($clients.Count -eq 0) {
 # --- Step 2: Auto-detect or confirm mode ---
 if (-not $Mode) {
     $hasPersonas = (Get-ChildItem "$repoRoot\personas" -Directory -ErrorAction SilentlyContinue |
-        Where-Object { Test-Path "$($_.FullName)\AGENTS.md" }).Count -gt 0
+        Where-Object { (Test-Path "$($_.FullName)\persona.instructions.md") -or (Test-Path "$($_.FullName)\AGENTS.md") }).Count -gt 0
 
     if ($hasPersonas) {
         $Mode = "consume"
@@ -650,7 +650,7 @@ if ($Mode -eq "consume") {
         COPILOT_DIR = $copilotDir
         ENVIRONMENTS = "$displayName has $($environments -join ', ') available"
         PERSONA_LIST = ((Get-ChildItem "$repoRoot\personas" -Directory | Where-Object {
-            Test-Path "$($_.FullName)\AGENTS.md"
+            Test-Path "$($_.FullName)\persona.instructions.md"
         }).Name | Sort-Object) -join ', '
     }
 
@@ -712,8 +712,8 @@ if ($Mode -eq "consume") {
         # Gather items
         $items = @()
         if ($cat.Name -eq "Personas") {
-            $items = Get-ChildItem $repoDir -Directory | Where-Object { Test-Path "$($_.FullName)\AGENTS.md" } | ForEach-Object {
-                @{ Name = $_.Name; RepoFile = "$($_.FullName)\AGENTS.md"; LocalFile = "$localDir\$($_.Name)\AGENTS.md" }
+            $items = Get-ChildItem $repoDir -Directory | Where-Object { Test-Path "$($_.FullName)\persona.instructions.md" } | ForEach-Object {
+                @{ Name = $_.Name; RepoFile = "$($_.FullName)\persona.instructions.md"; LocalFile = "$localDir\$($_.Name)\persona.instructions.md" }
             }
         } elseif ($cat.Name -eq "Skills") {
             $items = Get-ChildItem $repoDir -Directory | Where-Object { Test-Path "$($_.FullName)\SKILL.md" } | ForEach-Object {
@@ -785,8 +785,8 @@ if ($Mode -eq "consume") {
                             if (-not (Test-Path "$($item.RepoDir)\$rel")) { Write-Host "    - $rel (only in local)" -ForegroundColor Red }
                         }
 
-                        # Auto-show diff for key files (SKILL.md, AGENTS.md)
-                        $keyFiles = $changedFiles | Where-Object { $_.Rel -match '^(SKILL\.md|AGENTS\.md)$' }
+                        # Auto-show diff for key files (SKILL.md, persona.instructions.md)
+                        $keyFiles = $changedFiles | Where-Object { $_.Rel -match '^(SKILL\.md|persona\.instructions\.md)$' }
                         foreach ($kf in $keyFiles) {
                             Write-Host ""
                             Write-Host "    --- DIFF: $($kf.Rel) ---" -ForegroundColor Cyan
@@ -865,8 +865,8 @@ if ($Mode -eq "consume") {
         if (-not (Test-Path $localDir)) { continue }
 
         if ($cat.Name -eq "Personas") {
-            $repoNames = @(Get-ChildItem $repoDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path "$($_.FullName)\AGENTS.md" } | ForEach-Object { $_.Name })
-            $localNames = @(Get-ChildItem $localDir -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'active' -and (Test-Path "$($_.FullName)\AGENTS.md") } | ForEach-Object { $_.Name })
+            $repoNames = @(Get-ChildItem $repoDir -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path "$($_.FullName)\persona.instructions.md" } | ForEach-Object { $_.Name })
+            $localNames = @(Get-ChildItem $localDir -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'active' -and ((Test-Path "$($_.FullName)\persona.instructions.md") -or (Test-Path "$($_.FullName)\AGENTS.md")) } | ForEach-Object { $_.Name })
             foreach ($name in $localNames) {
                 if ($name -notin $repoNames) {
                     $localOnlyItems += @{ Category = $cat.Name; Name = $name; Path = "$localDir\$name"; IsDir = $true }
@@ -1049,20 +1049,86 @@ if ($Mode -eq "consume") {
     }
 }
 
+# --- Step 11.5: Migrate legacy AGENTS.md persona files ---
+if ($Mode -eq "consume") {
+    $legacyActiveFile = "$copilotDir\personas\active\AGENTS.md"
+    $newActiveFile = "$copilotDir\personas\active\.github\instructions\persona.instructions.md"
+
+    # Check if local personas still use AGENTS.md (legacy format)
+    $legacyPersonas = @(Get-ChildItem "$copilotDir\personas" -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne 'active' -and (Test-Path "$($_.FullName)\AGENTS.md") -and -not (Test-Path "$($_.FullName)\persona.instructions.md") })
+
+    $needsActiveMigration = (Test-Path $legacyActiveFile) -and -not (Test-Path $newActiveFile)
+
+    if ($legacyPersonas.Count -gt 0 -or $needsActiveMigration) {
+        Write-Host ""
+        Write-Host "  🔄 Persona Format Migration" -ForegroundColor Cyan
+        Write-Host "  Persona files have been renamed from AGENTS.md to persona.instructions.md" -ForegroundColor Yellow
+        Write-Host "  This adds applyTo frontmatter for auto-discovery by Copilot CLI." -ForegroundColor Yellow
+
+        $proceed = $true
+        if (-not $Force) {
+            $confirm = Read-Host "  Migrate $($legacyPersonas.Count) local persona(s) to new format? (Y/n, default: Y)"
+            $proceed = ($confirm -eq "" -or $confirm -match '^[Yy]')
+        }
+
+        if ($proceed) {
+            foreach ($p in $legacyPersonas) {
+                $oldFile = "$($p.FullName)\AGENTS.md"
+                $newFile = "$($p.FullName)\persona.instructions.md"
+                if ($DryRun) {
+                    Write-Info "[DRY RUN] Would migrate $($p.Name)/AGENTS.md -> persona.instructions.md"
+                } else {
+                    # Read content and add frontmatter if not present
+                    $content = Get-Content $oldFile -Raw
+                    if (-not $content.StartsWith('---')) {
+                        $content = "---`napplyTo: `"**`"`n---`n" + $content
+                    }
+                    Set-Content $newFile -Value $content -NoNewline
+                    Remove-Item $oldFile -Force
+                    Write-Success "Migrated $($p.Name)"
+                }
+            }
+
+            # Migrate active persona
+            if ($needsActiveMigration) {
+                if ($DryRun) {
+                    Write-Info "[DRY RUN] Would migrate active persona to .github/instructions/"
+                } else {
+                    New-Item -ItemType Directory -Path "$copilotDir\personas\active\.github\instructions" -Force | Out-Null
+                    $content = Get-Content $legacyActiveFile -Raw
+                    if (-not $content.StartsWith('---')) {
+                        $content = "---`napplyTo: `"**`"`n---`n" + $content
+                    }
+                    Set-Content $newActiveFile -Value $content -NoNewline
+                    Remove-Item $legacyActiveFile -Force
+                    Write-Success "Migrated active persona to .github/instructions/"
+                }
+            }
+        } else {
+            Write-Info "Migration skipped — personas will continue using AGENTS.md locally"
+        }
+    }
+}
+
 # --- Step 12: Set active persona ---
 if ($Mode -eq "consume") {
     Write-Host ""
     Write-Host "  🎭 Default Persona" -ForegroundColor Cyan
-    $activeFile = "$copilotDir\personas\active\AGENTS.md"
+    $activeFile = "$copilotDir\personas\active\.github\instructions\persona.instructions.md"
 
     if (-not (Test-Path $activeFile)) {
         $defaultPersona = "productivity"
-        $defaultSource = "$copilotDir\personas\$defaultPersona\AGENTS.md"
+        $defaultSource = "$copilotDir\personas\$defaultPersona\persona.instructions.md"
         if (Test-Path $defaultSource) {
             if ($DryRun) {
                 Write-Info "[DRY RUN] Would set default persona to $defaultPersona"
             } else {
+                New-Item -ItemType Directory -Path "$copilotDir\personas\active\.github\instructions" -Force | Out-Null
                 Copy-Item $defaultSource $activeFile -Force
+                # Clean up legacy AGENTS.md if present
+                $legacyFile = "$copilotDir\personas\active\AGENTS.md"
+                if (Test-Path $legacyFile) { Remove-Item $legacyFile -Force }
                 Write-Success "Default persona set to $defaultPersona"
             }
         }

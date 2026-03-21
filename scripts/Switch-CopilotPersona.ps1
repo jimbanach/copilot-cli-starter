@@ -3,7 +3,8 @@
     Switch between Copilot CLI personas (3-layer model).
 
 .DESCRIPTION
-    Copies the selected persona's AGENTS.md to ~/.copilot/personas/active/AGENTS.md
+    Copies the selected persona's persona.instructions.md to
+    ~/.copilot/personas/active/.github/instructions/persona.instructions.md
     (Layer 3). Layers 1 (base) and 2 (instance rules) are never touched.
     Auto-detects new personas and updates the base instructions persona list.
 
@@ -38,27 +39,36 @@ param(
 
 $personaRoot = "$HOME\.copilot\personas"
 $activeDir = "$HOME\.copilot\personas\active"
-$activeFile = "$activeDir\AGENTS.md"
+$activeInstructionsDir = "$activeDir\.github\instructions"
+$activeFile = "$activeInstructionsDir\persona.instructions.md"
+$legacyActiveFile = "$activeDir\AGENTS.md"
 $baseFile = "$HOME\.copilot\copilot-instructions.md"
 
 # Helper: extract persona description from first line after "# Persona:"
 function Get-PersonaDescription {
     param([string]$PersonaName)
-    # Try AGENTS.md first, fall back to copilot-instructions.md
-    $file = Join-Path $personaRoot "$PersonaName\AGENTS.md"
+    # Try persona.instructions.md first, fall back to AGENTS.md, then copilot-instructions.md
+    $file = Join-Path $personaRoot "$PersonaName\persona.instructions.md"
+    if (-not (Test-Path $file)) {
+        $file = Join-Path $personaRoot "$PersonaName\AGENTS.md"
+    }
     if (-not (Test-Path $file)) {
         $file = Join-Path $personaRoot "$PersonaName\copilot-instructions.md"
     }
     if (Test-Path $file) {
-        $firstLine = (Get-Content $file -TotalCount 1) -replace "^# Persona:\s*", ""
-        return $firstLine
+        # Skip frontmatter lines, find first "# Persona:" line
+        $lines = Get-Content $file
+        foreach ($line in $lines) {
+            if ($line -match "^# Persona:\s*(.+)") { return $Matches[1] }
+        }
+        return "(no description)"
     }
     return "(no description)"
 }
 
-# Get available personas (dirs with AGENTS.md or copilot-instructions.md, excluding 'active')
+# Get available personas (dirs with persona.instructions.md, AGENTS.md, or copilot-instructions.md, excluding 'active')
 $personas = Get-ChildItem -Path $personaRoot -Directory | Where-Object { $_.Name -ne 'active' } | Where-Object {
-    (Test-Path "$($_.FullName)\AGENTS.md") -or (Test-Path "$($_.FullName)\copilot-instructions.md")
+    (Test-Path "$($_.FullName)\persona.instructions.md") -or (Test-Path "$($_.FullName)\AGENTS.md") -or (Test-Path "$($_.FullName)\copilot-instructions.md")
 } | Select-Object -ExpandProperty Name
 
 if ($personas.Count -eq 0) {
@@ -82,17 +92,30 @@ if (Test-Path $baseFile) {
     }
 }
 
-# Check current persona by comparing active AGENTS.md (line-by-line for CRLF tolerance)
+# Helper: resolve persona source file (persona.instructions.md > AGENTS.md > copilot-instructions.md)
+function Get-PersonaSourceFile {
+    param([string]$PersonaName)
+    $file = "$personaRoot\$PersonaName\persona.instructions.md"
+    if (Test-Path $file) { return $file }
+    $file = "$personaRoot\$PersonaName\AGENTS.md"
+    if (Test-Path $file) { return $file }
+    $file = "$personaRoot\$PersonaName\copilot-instructions.md"
+    if (Test-Path $file) { return $file }
+    return $null
+}
+
+# Check current persona by comparing active persona file (line-by-line for CRLF tolerance)
 $currentPersona = $null
-if (Test-Path $activeFile) {
-    $activeLines = @(Get-Content $activeFile -ErrorAction SilentlyContinue)
+# Check new location first, fall back to legacy
+$currentActiveFile = if (Test-Path $activeFile) { $activeFile } elseif (Test-Path $legacyActiveFile) { $legacyActiveFile } else { $null }
+if ($currentActiveFile) {
+    $activeLines = @(Get-Content $currentActiveFile -ErrorAction SilentlyContinue)
     $bestMatch = $null
     $bestDiffCount = [int]::MaxValue
 
     foreach ($p in $personas) {
-        $pFile = "$personaRoot\$p\AGENTS.md"
-        if (-not (Test-Path $pFile)) { $pFile = "$personaRoot\$p\copilot-instructions.md" }
-        if (-not (Test-Path $pFile)) { continue }
+        $pFile = Get-PersonaSourceFile $p
+        if (-not $pFile) { continue }
         $pLines = @(Get-Content $pFile -ErrorAction SilentlyContinue)
         $diff = Compare-Object $activeLines $pLines -ErrorAction SilentlyContinue
         $diffCount = if ($diff) { $diff.Count } else { 0 }
@@ -159,15 +182,11 @@ if (-not $Persona) {
 }
 
 # Validate persona exists
-$personaPath = "$personaRoot\$Persona\AGENTS.md"
-if (-not (Test-Path $personaPath)) {
-    # Fall back to old format
-    $personaPath = "$personaRoot\$Persona\copilot-instructions.md"
-    if (-not (Test-Path $personaPath)) {
-        Write-Host "  Persona '$Persona' not found" -ForegroundColor Red
-        Write-Host "  Available: $($personas -join ', ')" -ForegroundColor Yellow
-        exit 1
-    }
+$personaPath = Get-PersonaSourceFile $Persona
+if (-not $personaPath) {
+    Write-Host "  Persona '$Persona' not found" -ForegroundColor Red
+    Write-Host "  Available: $($personas -join ', ')" -ForegroundColor Yellow
+    exit 1
 }
 
 # Determine targets
@@ -186,10 +205,10 @@ switch ($Target) {
 }
 
 # Check for unsaved edits to the current active persona before switching
-if ($currentPersona -and (Test-Path $activeFile)) {
-    $currentSourceFile = "$personaRoot\$currentPersona\AGENTS.md"
-    if (Test-Path $currentSourceFile) {
-        $activeLines = @(Get-Content $activeFile)
+if ($currentPersona -and $currentActiveFile) {
+    $currentSourceFile = Get-PersonaSourceFile $currentPersona
+    if ($currentSourceFile) {
+        $activeLines = @(Get-Content $currentActiveFile)
         $sourceLines = @(Get-Content $currentSourceFile)
         $diff = Compare-Object $sourceLines $activeLines -ErrorAction SilentlyContinue
         if ($diff.Count -gt 0) {
@@ -197,7 +216,7 @@ if ($currentPersona -and (Test-Path $activeFile)) {
             Write-Host "  ⚠️  Active persona '$currentPersona' has unsaved edits." -ForegroundColor Yellow
             $save = Read-Host "  Save changes back to $currentPersona before switching? (Y/n, default: Y)"
             if ($save -eq "" -or $save -match '^[Yy]') {
-                Copy-Item $activeFile $currentSourceFile -Force
+                Copy-Item $currentActiveFile $currentSourceFile -Force
                 Write-Host "  ✅ Saved edits to $currentPersona" -ForegroundColor Green
             } else {
                 Write-Host "  ⏭️  Edits discarded" -ForegroundColor DarkGray
@@ -206,10 +225,12 @@ if ($currentPersona -and (Test-Path $activeFile)) {
     }
 }
 
-# Deploy Layer 3 — copy persona AGENTS.md to active location(s)
+# Deploy Layer 3 — copy persona file to active location(s)
 if ($deployCli) {
-    New-Item -ItemType Directory -Path $activeDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $activeInstructionsDir -Force | Out-Null
     Copy-Item -Path $personaPath -Destination $activeFile -Force
+    # Clean up legacy AGENTS.md if present
+    if (Test-Path $legacyActiveFile) { Remove-Item $legacyActiveFile -Force }
     Write-Host "  ✅ CLI: Switched to '$Persona'" -ForegroundColor Green
     Write-Host "     → $activeFile" -ForegroundColor DarkGray
 }

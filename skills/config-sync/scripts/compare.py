@@ -84,7 +84,7 @@ CATEGORIES = {
         'repo_subdir': 'personas',
         'local_subdir': 'personas',
         'item_type': 'directory',
-        'key_file': 'AGENTS.md',
+        'key_file': 'persona.instructions.md',
         'exclude_dirs': ['active'],
     },
     'skills': {
@@ -183,8 +183,11 @@ def compute_template_variables(manifest_entry, config, repo_path, copilot_dir):
             persona_names = []
             if os.path.isdir(personas_dir):
                 for d in sorted(os.listdir(personas_dir)):
-                    agents_file = os.path.join(personas_dir, d, 'AGENTS.md')
-                    if os.path.isdir(os.path.join(personas_dir, d)) and os.path.exists(agents_file):
+                    d_path = os.path.join(personas_dir, d)
+                    if os.path.isdir(d_path) and (
+                        os.path.exists(os.path.join(d_path, 'persona.instructions.md')) or
+                        os.path.exists(os.path.join(d_path, 'AGENTS.md'))
+                    ):
                         persona_names.append(d)
             variables[var_name] = ', '.join(persona_names)
     return variables
@@ -339,25 +342,32 @@ def apply_template(repo_path, copilot_dir, item_name):
 
 
 def compare_directory_items(repo_dir, local_dir, key_file, exclude_dirs):
-    """Compare directory-based items (personas, skills)."""
+    """Compare directory-based items (personas, skills).
+    
+    For personas, also accepts legacy AGENTS.md locally for migration support.
+    """
     results = {'new_in_repo': [], 'modified': [], 'local_only': [], 'identical': []}
+    legacy_key_file = 'AGENTS.md' if key_file == 'persona.instructions.md' else None
 
     repo_path = Path(repo_dir)
     local_path = Path(local_dir)
 
-    # Get repo items
+    # Get repo items (strict — only new format)
     repo_items = set()
     if repo_path.exists():
         for d in repo_path.iterdir():
             if d.is_dir() and d.name not in exclude_dirs and (d / key_file).exists():
                 repo_items.add(d.name)
 
-    # Get local items
+    # Get local items (accepts new format or legacy AGENTS.md)
     local_items = set()
     if local_path.exists():
         for d in local_path.iterdir():
-            if d.is_dir() and d.name not in exclude_dirs and (d / key_file).exists():
-                local_items.add(d.name)
+            if d.is_dir() and d.name not in exclude_dirs:
+                if (d / key_file).exists():
+                    local_items.add(d.name)
+                elif legacy_key_file and (d / legacy_key_file).exists():
+                    local_items.add(d.name)
 
     # Categorize
     for name in repo_items - local_items:

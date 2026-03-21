@@ -3,6 +3,22 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased] - 2026-03-21
+
+### Changed
+- **BREAKING:** Renamed persona files from `AGENTS.md` to `persona.instructions.md` with `applyTo: "**"` frontmatter
+  - Eliminates naming collision with the industry-standard `AGENTS.md` convention (60k+ repos)
+  - Uses `.instructions.md` auto-discovery mechanism for reliable persona loading
+  - Migration logic in `init.ps1` detects and converts old format automatically
+- Updated `init.ps1` with dual-format support and migration prompts
+- Updated `Switch-CopilotPersona.ps1` with fallback chain (persona.instructions.md → AGENTS.md)
+- Updated `compare.py` with dual-format persona detection
+- Updated `sync_state.py` with migration tracking support
+
+### Added
+- New `persona-creator` skill for guided persona creation and evaluation
+- Schema versioning (`config_schema_version: "2.0"`) in instance-config
+
 ## [2026-03-18] - Upstream sync: multiple improvements
 ### Added
 - `init.ps1`: Auto-detect available environments — native, WSL, Docker (fixes #18)

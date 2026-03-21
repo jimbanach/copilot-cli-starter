@@ -76,7 +76,7 @@ Copilot CLI natively loads instructions from multiple locations. This setup uses
 graph TD
     L1["🟦 Layer 1: Base\ncopilot-instructions.md\nWorkspace, skills, behaviors"]
     L2["🟨 Layer 2: Instance Rules\ninstance.instructions.md\nMachine-specific (work/personal)"]
-    L3["🟩 Layer 3: Active Persona\nAGENTS.md\nRole-specific tone & focus"]
+    L3["🟩 Layer 3: Active Persona\npersona.instructions.md\nRole-specific tone & focus\n(applyTo: '**' frontmatter)"]
     OUT["Complete instruction set\nfor Copilot CLI"]
 
     L1 --> OUT
@@ -90,13 +90,13 @@ graph TD
 |-------|---------|-----------|-------------|
 | **1. Base** | Workspace structure, skills catalog, persona list, general behaviors | `~/.copilot/copilot-instructions.md` | When adding new skills, changing workspace structure, or updating universal behaviors |
 | **2. Instance** | Machine-specific rules (work: confidentiality, paths; personal: personal rules) | `~/.copilot/personas/active/.github/instructions/instance.instructions.md` | Rarely — only when instance rules change |
-| **3. Persona** | Role-specific tone, behaviors, domain expertise | `~/.copilot/personas/active/AGENTS.md` | Never edit directly — use `Switch-CopilotPersona.ps1` |
+| **3. Persona** | Role-specific tone, behaviors, domain expertise | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` | Never edit directly — use `Switch-CopilotPersona.ps1` |
 
 ### How Layers Are Loaded
 
 - **Layer 1:** Copilot CLI always loads `~/.copilot/copilot-instructions.md` as the user-level instruction file
-- **Layers 2 & 3:** The environment variable `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` points to `~/.copilot/personas/active/`. Copilot CLI finds:
-  - `AGENTS.md` → Layer 3 (persona)
+- **Layers 2 & 3:** The environment variable `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` points to `~/.copilot/personas/active/`. Copilot CLI finds `.github/instructions/*.instructions.md` files via auto-discovery:
+  - `.github/instructions/persona.instructions.md` → Layer 3 (persona, with `applyTo: "**"` frontmatter)
   - `.github/instructions/instance.instructions.md` → Layer 2 (instance rules)
 
 ### How to Edit Each Layer
@@ -124,14 +124,15 @@ code ~/.copilot/personas/active/.github/instructions/instance.instructions.md
 ~/.copilot/Switch-CopilotPersona.ps1 -List
 
 # To edit a persona's content, edit the library copy:
-code ~/.copilot/personas/productivity/AGENTS.md
+code ~/.copilot/personas/productivity/persona.instructions.md
 # Then switch to it again to deploy
 ```
 
 ## Persona Switching
 
 The `Switch-CopilotPersona.ps1` script manages Layer 3. It:
-- Copies the selected persona's `AGENTS.md` into `personas/active/AGENTS.md`
+- Copies the selected persona's `persona.instructions.md` into `personas/active/.github/instructions/persona.instructions.md`
+- Supports fallback chain: `persona.instructions.md` → `AGENTS.md` (legacy) for backwards compatibility
 - **Never touches Layers 1 or 2**
 - Auto-detects new personas: if you add a new persona directory, the script automatically adds it to the Layer 1 persona list
 - Supports `-Target` parameter: `cli`, `vscode`, `all`, or `auto` (default)
@@ -163,9 +164,9 @@ copilot-cli-config/
 │       ├── work.instructions.md           # Layer 2: work machine rules
 │       └── personal.instructions.md       # Layer 2: personal machine rules
 │
-├── personas/                              # Layer 3: one AGENTS.md per persona
-│   ├── productivity/AGENTS.md
-│   ├── deep-technical/AGENTS.md
+├── personas/                              # Layer 3: one persona.instructions.md per persona
+│   ├── productivity/persona.instructions.md   # applyTo: "**" frontmatter
+│   ├── deep-technical/persona.instructions.md
 │   └── ...                                # See Available Personas table above
 │
 ├── skills/                                # Portable skills (CLI + VS Code)
@@ -259,7 +260,7 @@ For each category (personas, skills, agents, scripts), you choose:
 |-----------|-----|---------|
 | Layer 1 (base) | `~/.copilot/copilot-instructions.md` | Same |
 | Layer 2 (instance) | `~/.copilot/personas/active/.github/instructions/` | Same |
-| Layer 3 (persona) | `~/.copilot/personas/active/AGENTS.md` | Same |
+| Layer 3 (persona) | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` | Same |
 | Skills | `~/.copilot/skills/` | Same + `chat.agentSkillsLocations` setting |
 | MCP | `~/.copilot/mcp-config.json` | `%APPDATA%/Code/User/mcp.json` |
 | Env var | `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` | Same |
@@ -388,7 +389,7 @@ Quick reference for common operations:
 | **Deploy from repo to local** | Run `init.ps1 -Mode consume` |
 | **Preview without changes** | Run `init.ps1 -DryRun` |
 | **Restore from backup** | See `~/.copilot-backups/` and RESTORE.md |
-| **Add a new persona** | Create `~/.copilot/personas/<name>/AGENTS.md` — auto-detected on next switch |
+| **Add a new persona** | Create `~/.copilot/personas/<name>/persona.instructions.md` with `applyTo: "**"` frontmatter — auto-detected on next switch |
 | **Edit instance rules** | Edit `~/.copilot/personas/active/.github/instructions/instance.instructions.md` |
 | **Review a peer PR** | `gh pr list --repo {{YOUR_NAME}}banach/copilot-cli-starter` then `gh pr diff <N>` |
 

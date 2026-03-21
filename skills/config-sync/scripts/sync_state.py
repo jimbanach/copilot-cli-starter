@@ -38,6 +38,7 @@ def get_empty_state(instance='unknown', repo_path=''):
         'last_push': None,
         'last_publish': None,
         'skipped_items': [],
+        'migrations_applied': [],
         'history': [],
     }
 
@@ -136,6 +137,31 @@ def is_skipped(state, path):
     return any(s['path'] == path for s in state['skipped_items'])
 
 
+def record_migration(state, migration_id, description=''):
+    """Record that a migration has been applied."""
+    if 'migrations_applied' not in state:
+        state['migrations_applied'] = []
+    if not is_migration_applied(state, migration_id):
+        state['migrations_applied'].append({
+            'id': migration_id,
+            'description': description,
+            'applied_at': now_iso(),
+        })
+        state['history'].append({
+            'action': 'migration',
+            'migration_id': migration_id,
+            'timestamp': now_iso(),
+        })
+        state['history'] = state['history'][-50:]
+    return state
+
+
+def is_migration_applied(state, migration_id):
+    """Check if a migration has already been applied."""
+    migrations = state.get('migrations_applied', [])
+    return any(m['id'] == migration_id for m in migrations)
+
+
 def print_status(state):
     """Print human-readable sync status."""
     print("\n📊 Sync State")
@@ -152,6 +178,13 @@ def print_status(state):
         for s in skips:
             reason = f" — {s['reason']}" if s.get('reason') else ''
             print(f"      • {s['path']}{reason}")
+
+    migrations = state.get('migrations_applied', [])
+    if migrations:
+        print(f"\n   🔄 Migrations applied ({len(migrations)}):")
+        for m in migrations:
+            desc = f" — {m['description']}" if m.get('description') else ''
+            print(f"      • {m['id']}{desc} ({m.get('applied_at', '?')})")
 
     history = state.get('history', [])
     if history:
@@ -196,6 +229,15 @@ def main():
 
     # list-skips
     subparsers.add_parser('list-skips', help='List all skipped items')
+
+    # record-migration
+    migrate_parser = subparsers.add_parser('record-migration', help='Record a migration')
+    migrate_parser.add_argument('migration_id', help='Migration identifier')
+    migrate_parser.add_argument('--description', default='', help='Migration description')
+
+    # check-migration
+    check_migrate_parser = subparsers.add_parser('check-migration', help='Check if migration applied')
+    check_migrate_parser.add_argument('migration_id', help='Migration identifier')
 
     # Common options
     parser.add_argument('--state-file', default=None, help='Path to sync-state.json')
@@ -251,6 +293,22 @@ def main():
                 print(f"   • {s['path']}{reason}")
         else:
             print("   No skipped items")
+
+    elif args.command == 'record-migration':
+        if is_migration_applied(state, args.migration_id):
+            print(f"ℹ️  Migration '{args.migration_id}' already applied")
+        else:
+            state = record_migration(state, args.migration_id, args.description)
+            save_state(state, args.state_file)
+            print(f"✅ Migration recorded: {args.migration_id}")
+
+    elif args.command == 'check-migration':
+        if is_migration_applied(state, args.migration_id):
+            print(f"✅ Migration '{args.migration_id}' has been applied")
+            sys.exit(0)
+        else:
+            print(f"⚠️  Migration '{args.migration_id}' has NOT been applied")
+            sys.exit(1)
 
 
 if __name__ == '__main__':

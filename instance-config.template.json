@@ -17,5 +17,6 @@
   "known_folders": {
     "desktop": "auto-detected by init.ps1",
     "documents": "auto-detected by init.ps1"
-  }
+  },
+  "config_schema_version": "2.0"
 }

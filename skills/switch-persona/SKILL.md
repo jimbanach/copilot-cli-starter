@@ -12,18 +12,18 @@ This skill allows mid-chat persona switching. When invoked:
 - If no persona is specified, list all available personas and ask which one to switch to
 
 ### Available Personas
-**Always dynamically scan `~/.copilot/personas/` for subdirectories.** Each subdirectory containing an `AGENTS.md` file is an available persona. Do NOT rely on a hardcoded list — new personas may be added at any time.
+**Always dynamically scan `~/.copilot/personas/` for subdirectories.** Each subdirectory containing a `persona.instructions.md` file (or legacy `AGENTS.md`) is an available persona. Do NOT rely on a hardcoded list — new personas may be added at any time.
 
 **Discovery steps:**
 1. List all subdirectories in `~/.copilot/personas/` (excluding `active/`)
-2. For each subdirectory, verify `AGENTS.md` exists
-3. Read the first few lines of each file to extract the persona name and a brief description (typically found in the `# Persona:` heading and first paragraph)
+2. For each subdirectory, check for `persona.instructions.md` (preferred) or `AGENTS.md` (legacy fallback)
+3. Read the file to extract the persona name and a brief description (found in the `# Persona:` heading after any frontmatter)
 4. Present the full list to the user
 
 **Directory name → display name mapping:** Convert kebab-case directory names to title case for display (e.g., `hypervelocity-engineer` → `Hypervelocity Engineer`, `architect-marketer` → `Architect Marketer`).
 
 ## 2. Load the Persona
-1. Read the target persona's `AGENTS.md` from `~/.copilot/personas/<name>/AGENTS.md`
+1. Read the target persona's file from `~/.copilot/personas/<name>/persona.instructions.md` (or `AGENTS.md` for legacy format)
 2. Present the persona summary to the user for confirmation
 3. Once confirmed, adopt the persona's:
    - **Tone & Style** — immediately adjust communication style
@@ -32,7 +32,7 @@ This skill allows mid-chat persona switching. When invoked:
 
 ## 3. Persist the Change
 After switching:
-1. Run `Switch-CopilotPersona.ps1 -Persona <name> -Target cli` to copy the persona's `AGENTS.md` to `~/.copilot/personas/active/AGENTS.md` (Layer 3). This preserves Layer 1 (base instructions) and Layer 2 (instance rules).
+1. Run `~/.copilot/Switch-CopilotPersona.ps1 -Persona <name> -Target cli` to copy the persona file to `~/.copilot/personas/active/.github/instructions/persona.instructions.md` (Layer 3). This preserves Layer 1 (base instructions) and Layer 2 (instance rules).
 2. Confirm the switch to the user:
    ```
    ✅ Switched to [persona name] persona.
@@ -49,7 +49,7 @@ After switching:
 ## Important Notes
 - The persona switch takes effect immediately in the current conversation
 - Only **Layer 3 (active persona)** is changed — Layer 1 (base instructions) and Layer 2 (instance rules) are never modified
-- Persistence is handled by `Switch-CopilotPersona.ps1`, which copies `AGENTS.md` to `~/.copilot/personas/active/AGENTS.md`
+- Persistence is handled by `~/.copilot/Switch-CopilotPersona.ps1`, which copies the persona file to `~/.copilot/personas/active/.github/instructions/persona.instructions.md`
 - Do NOT overwrite `~/.copilot/copilot-instructions.md` — that is the Layer 1 universal base
 - This does NOT affect project-level instruction files — those remain project-specific
 - Skills and agents remain available regardless of which persona is active

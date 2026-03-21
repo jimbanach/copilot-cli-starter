@@ -129,7 +129,7 @@ After the user chooses:
 
 1. **Check for existing personas** -- Scan `~/.copilot/personas/` for matching personas
 2. **If a match exists** -- Ask if they want to use or adapt it
-3. **If no match** -- Offer to create a new persona definition
+3. **If no match** -- Invoke the **persona-creator** skill to guide the user through creating a new persona. The persona-creator handles requirements gathering, library analysis, generation, and review.
 4. **Incorporate into agent instructions** -- Weave the persona characteristics into the agent's Role section and communication style
 
 For CLI agents, the persona is embedded directly in the agent's instructions (Role section, tone guidance, response style).
