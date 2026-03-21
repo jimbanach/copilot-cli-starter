@@ -84,19 +84,19 @@ copilot-cli-config/
 │
 ├── personas/
 │   ├── productivity/
-│   │   └── AGENTS.md                 # Layer 3: Role-specific content only
+│   │   └── persona.instructions.md                 # Layer 3: Role-specific content only
 │   ├── deep-technical/
-│   │   └── AGENTS.md
+│   │   └── persona.instructions.md
 │   ├── security-architect/
-│   │   └── AGENTS.md
+│   │   └── persona.instructions.md
 │   ├── marketing/
-│   │   └── AGENTS.md
+│   │   └── persona.instructions.md
 │   ├── program-manager/
-│   │   └── AGENTS.md
+│   │   └── persona.instructions.md
 │   ├── architect-marketer/
-│   │   └── AGENTS.md
+│   │   └── persona.instructions.md
 │   └── hypervelocity-engineer/
-│       └── AGENTS.md
+│       └── persona.instructions.md
 │
 ├── skills/
 │   ├── agent-builder/          (SKILL.md + references/ + scripts/)
@@ -160,13 +160,13 @@ Each machine gets a local `instance-config.json` (gitignored) created during ini
 {
   "instance_name": "work",
   "user_display_name": "{{YOUR_NAME}}",
-  "workspace_path": "{{WORKSPACE_PATH}}",
+  "workspace_path": "~/OneDrive - Microsoft/CopilotWorkspace",
   "project_script_path": "~/.copilot/New-CopilotProject.ps1",
-  "github_account": "{{YOUR_NAME}}banach_microsoft",
+  "github_account": "{{GITHUB_EMU_USER}}",
   "available_environments": ["native", "wsl", "docker"],
   "docker_version": "29.2.0",
   "mcp_profile": "work",
-  "repo_remote": "git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git",
+  "repo_remote": "{{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git",
   "repo_local_path": "~/copilot-cli-config",
   "branch": "work"
 }
@@ -178,7 +178,7 @@ Personal instance would have:
   "instance_name": "personal",
   "user_display_name": "{{YOUR_NAME}}",
   "workspace_path": "~/OneDrive/CopilotWorkspace",
-  "github_account": "{{YOUR_NAME}}banach",
+  "github_account": "{{GITHUB_USER}}",
   "available_environments": ["native", "wsl", "docker"],
   "mcp_profile": "universal",
   "branch": "personal"
@@ -194,18 +194,18 @@ Copilot CLI natively loads instructions from multiple locations simultaneously. 
 COPILOT_CUSTOM_INSTRUCTIONS_DIRS = ~/.copilot/personas/active
 ```
 
-Copilot CLI then loads from this directory: `AGENTS.md` (persona) + `.github/instructions/*.instructions.md` (instance rules). Combined with the always-loaded `copilot-instructions.md`, this gives us three layers:
+Copilot CLI then loads from this directory: `.github/instructions/persona.instructions.md` (persona) + `.github/instructions/*.instructions.md` (instance rules). Combined with the always-loaded `copilot-instructions.md`, this gives us three layers:
 
 | Layer | File | Content | When it changes |
 |-------|------|---------|-----------------|
 | **1. Universal Base** | `~/.copilot/copilot-instructions.md` | Workspace structure, skills catalog, general behaviors, tool usage, persona list | Rarely — only when adding skills, changing workspace structure, or updating universal behaviors |
 | **2. Instance Rules** | `~/.copilot/personas/active/.github/instructions/instance.instructions.md` | Machine-specific rules (work: confidentiality, OneDrive paths, WorkIQ; personal: personal-specific preferences) | Once during init; edited manually when instance rules change |
-| **3. Active Persona** | `~/.copilot/personas/active/AGENTS.md` | Role-specific tone, behaviors, domain focus areas ONLY | Every persona switch (script copies from persona library) |
+| **3. Active Persona** | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` | Role-specific tone, behaviors, domain focus areas ONLY | Every persona switch (script copies from persona library) |
 
 **How it works:**
 - `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` env var points to `~/.copilot/personas/active/`
 - Copilot CLI loads all three files automatically on every session start
-- Persona switch script copies the selected persona's `AGENTS.md` into `active/` — **Layers 1 and 2 are never touched**
+- Persona switch script copies the selected persona's `persona.instructions.md` into `active/.github/instructions/` — **Layers 1 and 2 are never touched**
 - The `instance.instructions.md` uses `applyTo: "**"` frontmatter to apply to all file contexts
 
 **What each layer owns (clear boundaries):**
@@ -242,13 +242,13 @@ Layer 3 — Active Persona:
 **Persona library structure in the repo:**
 ```
 personas/
-├── productivity/AGENTS.md        # Role-specific content only (~1-3KB each)
-├── deep-technical/AGENTS.md
-├── security-architect/AGENTS.md
-├── marketing/AGENTS.md
-├── program-manager/AGENTS.md
-├── architect-marketer/AGENTS.md
-└── hypervelocity-engineer/AGENTS.md
+├── productivity/persona.instructions.md        # Role-specific content only (~1-3KB each)
+├── deep-technical/persona.instructions.md
+├── security-architect/persona.instructions.md
+├── marketing/persona.instructions.md
+├── program-manager/persona.instructions.md
+├── architect-marketer/persona.instructions.md
+└── hypervelocity-engineer/persona.instructions.md
 ```
 
 **Base and instance templates in the repo:**
@@ -266,17 +266,17 @@ base/
 ├── copilot-instructions.md                              # Layer 1: Universal base (resolved)
 ├── personas/
 │   ├── active/
-│   │   ├── AGENTS.md                                    # Layer 3: Currently active persona
-│   │   └── .github/
-│   │       └── instructions/
-│   │           └── instance.instructions.md             # Layer 2: Instance-specific rules
-│   ├── productivity/AGENTS.md                           # Persona library
-│   ├── deep-technical/AGENTS.md
-│   ├── security-architect/AGENTS.md
-│   ├── marketing/AGENTS.md
-│   ├── program-manager/AGENTS.md
-│   ├── architect-marketer/AGENTS.md
-│   └── hypervelocity-engineer/AGENTS.md
+│   │   ├── .github/
+│   │   │   └── instructions/
+│   │   │       ├── persona.instructions.md                  # Layer 3: Currently active persona
+│   │   │       └── instance.instructions.md             # Layer 2: Instance-specific rules
+│   ├── productivity/persona.instructions.md                           # Persona library
+│   ├── deep-technical/persona.instructions.md
+│   ├── security-architect/persona.instructions.md
+│   ├── marketing/persona.instructions.md
+│   ├── program-manager/persona.instructions.md
+│   ├── architect-marketer/persona.instructions.md
+│   └── hypervelocity-engineer/persona.instructions.md
 ├── skills/...
 ├── agents/...
 └── scripts/...
@@ -345,7 +345,7 @@ Local `~/.copilot/.copilot-sync/sync-state.json` (gitignored):
     }
   ],
   "tracked_files": {
-    "personas/productivity/AGENTS.md": {
+    "personas/productivity/persona.instructions.md": {
       "local_sha": "def456",
       "repo_sha": "def456",
       "status": "synced"
@@ -375,7 +375,7 @@ Local `~/.copilot/.copilot-sync/sync-state.json` (gitignored):
 
 ### First Time (Personal Laptop — consuming the repo)
 
-1. Clone the repo: `git clone git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git`
+1. Clone the repo: `git clone {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git`
 2. Checkout `personal` branch (created from `main`)
 3. Run `init.ps1`
 4. Script prompts for instance details
@@ -399,7 +399,7 @@ Local `~/.copilot/.copilot-sync/sync-state.json` (gitignored):
 1. **`.gitignore` is strict** — config.json, permissions, sessions, logs, __pycache__ are all excluded
 2. **CopilotWorkspace and GitHubProjects projects are NEVER in the repo** — they stay in OneDrive/local only
 3. **MCP configs are split** — WorkIQ stays on the work branch only
-4. **Sync skill flags instance-specific content** — if a file contains patterns like `OneDrive - Microsoft`, `{{YOUR_NAME}}banach_microsoft`, or work-specific paths, it warns before pushing to main
+4. **Sync skill flags instance-specific content** — if a file contains patterns like `OneDrive - Microsoft`, `{{GITHUB_EMU_USER}}`, or work-specific paths, it warns before pushing to main
 5. **Branch isolation** — work branch and personal branch never need to be checked out on the wrong machine
 6. **Sync state tracks skips** — if {{YOUR_NAME}} says "don't sync this" for a file, it remembers and won't ask again until the file changes
 7. **Template repo is internal-only** — private repo shared via collaborator access; peers are Microsoft employees
@@ -487,9 +487,9 @@ If it can't determine, it asks the user. If both are present, it offers to confi
 |-----------|---------------|-------------------|
 | **Layer 1: Base instructions** | `~/.copilot/copilot-instructions.md` | `%APPDATA%/Code/User/instructions/base.instructions.md` (via `chat.instructionsFilesLocations` setting) |
 | **Layer 2: Instance rules** | `~/.copilot/personas/active/.github/instructions/instance.instructions.md` (via env var) | `%APPDATA%/Code/User/instructions/instance.instructions.md` |
-| **Layer 3: Active persona** | `~/.copilot/personas/active/AGENTS.md` (via env var) | `%APPDATA%/Code/User/agents/active-persona.agent.md` (user-profile agent) |
-| **Persona library** | `~/.copilot/personas/*/AGENTS.md` | `%APPDATA%/Code/User/copilot-personas/*/AGENTS.md` (custom dir) |
-| **Persona switching** | `Switch-CopilotPersona.ps1` copies to `active/AGENTS.md` | `Switch-CopilotPersona.ps1` copies to VS Code user agents dir |
+| **Layer 3: Active persona** | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` (via env var) | `%APPDATA%/Code/User/agents/active-persona.agent.md` (user-profile agent) |
+| **Persona library** | `~/.copilot/personas/*/persona.instructions.md` | `%APPDATA%/Code/User/copilot-personas/*/persona.instructions.md` (custom dir) |
+| **Persona switching** | `Switch-CopilotPersona.ps1` copies to `active/.github/instructions/persona.instructions.md` | `Switch-CopilotPersona.ps1` copies to VS Code user agents dir |
 | **Agents** | `~/.copilot/agents/*.agent.md` | `%APPDATA%/Code/User/agents/*.agent.md` (user profile) |
 | **Skills** | `~/.copilot/skills/*/SKILL.md` | `~/.copilot/skills/*/SKILL.md` (same!) + `.github/skills/` + configurable via `chat.agentSkillsLocations` |
 | **MCP servers** | `~/.copilot/mcp-config.json` | `%APPDATA%/Code/User/mcp.json` (slightly different schema) |
@@ -532,7 +532,7 @@ Switch-CopilotPersona.ps1 -Persona productivity -Target vscode      # VS Code on
 Switch-CopilotPersona.ps1 -Persona productivity -Target all         # Both
 ```
 
-**New persona auto-detection:** On every run, the script scans `~/.copilot/personas/` for subdirectories containing `AGENTS.md`. If it finds a persona that isn't listed in the Layer 1 base `copilot-instructions.md` (in the "Available Personas" section), it automatically adds it. This means:
+**New persona auto-detection:** On every run, the script scans `~/.copilot/personas/` for subdirectories containing `persona.instructions.md`. If it finds a persona that isn't listed in the Layer 1 base `copilot-instructions.md` (in the "Available Personas" section), it automatically adds it. This means:
 - Drop a new persona folder into `~/.copilot/personas/` 
 - Next time you switch personas (or run with `-List`), the script adds it to the base instructions
 - Copilot immediately knows about the new persona without manual edits to Layer 1
@@ -590,7 +590,7 @@ Copy this into Copilot CLI on your new machine:
 
 I need to restore my Copilot CLI environment from my config repo. Here's what to do:
 
-1. Clone my private repo: git clone git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git ~/copilot-cli-config
+1. Clone my private repo: git clone {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git ~/copilot-cli-config
 2. Run the init script: ~/copilot-cli-config/init.ps1
 3. When prompted, configure this as my [work/personal] instance
 4. After setup, verify by running: Switch-CopilotPersona.ps1 -List
@@ -735,7 +735,7 @@ Documentation is NOT deferred to Phase 6. **Every phase updates docs incremental
 │   ├── permissions-config.json
 │   ├── New-CopilotProject.ps1
 │   ├── Switch-CopilotPersona.ps1
-│   ├── personas/                 # All 7 persona dirs with AGENTS.md (copilot-instructions.md removed in pre-Phase 1 cleanup)
+│   ├── personas/                 # All persona dirs with persona.instructions.md (renamed from AGENTS.md, see #72)
 │   ├── skills/                   # All skill dirs
 │   └── agents/                   # All agent files + scripts
 └── vscode/                       # VS Code Copilot config
@@ -771,6 +771,8 @@ $env:COPILOT_CUSTOM_INSTRUCTIONS_DIRS = ""  # or remove if wasn't set
 
 ### Phase 1: Local Refactor — 3-Layer Model on Work Machine
 **Goal:** Refactor the existing local setup to use the 3-layer instruction model. Changes are committed to the repo incrementally.
+
+> **Note:** Phases 1-3 reference `AGENTS.md` as the persona filename. These phases were completed before the rename to `persona.instructions.md` (see issue #72). The `AGENTS.md` references below are historically accurate for when the work was done.
 
 | # | Todo | Description |
 |---|------|-------------|
@@ -873,7 +875,7 @@ $env:COPILOT_CUSTOM_INSTRUCTIONS_DIRS = ""  # or remove if wasn't set
 - **Directory comparison:** Comparing directories requires recursive file-by-file comparison, not just checking existence. The `Get-DirStatus` function was added. Path normalization (trailing backslash) is critical for `Substring` to produce matching relative paths.
 - **Binary/empty files:** `Get-Content` returns null for some binary files (e.g., XSD schemas). Must wrap in `@()` and add `-ErrorAction SilentlyContinue` to prevent crashes.
 - **Input validation:** All interactive menus must validate input in a loop — invalid characters should show an error and re-prompt, not silently accept as the default.
-- **Compare workflow:** After showing a diff, the script must re-prompt with Import/Skip. The `while ($itemAction -eq "compare")` loop pattern handles this. Directory diffs should auto-show the SKILL.md/AGENTS.md inline diff when those key files differ.
+- **Compare workflow:** After showing a diff, the script must re-prompt with Import/Skip. The `while ($itemAction -eq "compare")` loop pattern handles this. Directory diffs should auto-show the SKILL.md/persona.instructions.md inline diff when those key files differ.
 - **Existing config retention:** Init script should detect existing `instance-config.json` and offer to retain settings. If the user declines, each prompt should show the current value as the default.
 - **Prompt clarity:** Prompts must always show valid options (e.g., "Options: work, personal") and the current default (e.g., "default: native"). Users pressing Enter with no input should always get a safe, sensible result.
 - **Workspace paths:** Must resolve `~` to `$env:USERPROFILE` and store absolute paths. Display can show tilde but stored values must work in all PowerShell contexts.
@@ -925,7 +927,7 @@ $env:COPILOT_CUSTOM_INSTRUCTIONS_DIRS = ""  # or remove if wasn't set
 
 **Phase 5a Gate:**
 - **Automated test script (`test-phase5a.ps1`):**
-  - Verifies no occurrence of "{{YOUR_NAME}}" or "{{YOUR_NAME}}banach" in template repo (only `{{YOUR_NAME}}`)
+  - Verifies no occurrence of "{{YOUR_NAME}}" or "{{GITHUB_USER}}" in template repo (only `{{YOUR_NAME}}`)
   - Verifies no specific workspace paths (only `{{WORKSPACE_PATH}}`)
   - Verifies voice-profile.md is blank template (not {{YOUR_NAME}}'s profile)
   - Verifies template `init.ps1` runs without errors in dry-run mode
@@ -1083,12 +1085,12 @@ The init script (both {{YOUR_NAME}}'s sync version and the peer template version
 │  ┌──────────────────────────────────────────────┐     │
 │  │  📁 Category: Personas (7 files)             │     │
 │  │  ┌────────────────────────────────────────┐  │     │
-│  │  │ productivity/AGENTS.md                 │  │     │
+│  │  │ productivity/persona.instructions.md                 │  │     │
 │  │  │  Status: ⚠️ Exists locally (differs)   │  │     │
 │  │  │  [Import] [Skip] [Compare] [Customize] │  │     │
 │  │  └────────────────────────────────────────┘  │     │
 │  │  ┌────────────────────────────────────────┐  │     │
-│  │  │ deep-technical/AGENTS.md               │  │     │
+│  │  │ deep-technical/persona.instructions.md               │  │     │
 │  │  │  Status: ✅ New (doesn't exist locally) │  │     │
 │  │  │  [Import] [Skip] [Customize]           │  │     │
 │  │  └────────────────────────────────────────┘  │     │
@@ -1183,7 +1185,7 @@ When {{YOUR_NAME}} publishes improvements to the template repo, peers can pull t
 
 ```powershell
 # One-time: add upstream remote
-git remote add upstream git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-starter.git
+git remote add upstream {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-starter.git
 
 # Pull updates
 git fetch upstream
@@ -1234,10 +1236,10 @@ The issue templates include a field for "Environments affected" so fixes are tra
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Repo hosting | Two private repos under {{YOUR_NAME}}banach_microsoft | Both private; template shared via collaborator access to specific peers |
+| Repo hosting | Two private repos under {{GITHUB_EMU_USER}} | Both private; template shared via collaborator access to specific peers |
 | Branch strategy | main/work/personal (sync repo), main only (template repo) | Clean separation with universal baseline |
 | Peer sharing model | Private template repo + collaborator access | Internal audience only; peers fork and customize their own copy |
-| Persona architecture | Native 3-layer model (base + instance rules + AGENTS.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |
+| Persona architecture | Native 3-layer model (base + instance rules + persona.instructions.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |
 | Confidentiality guardrail | Layer 2 (instance rules), not base | Work-specific rule; personal machine gets different Layer 2 content |
 | Dual client support | CLI and VS Code deployment paths with auto-detection | Peers use whichever client they prefer; init script handles both |
 | Template resolution | At init/sync time via instance-config.json | Files in ~/.copilot are always fully resolved; repo stores template + config |
@@ -1252,10 +1254,10 @@ The issue templates include a field for "Environments affected" so fixes are tra
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Repo hosting | Two private repos under {{YOUR_NAME}}banach_microsoft | Both private; template shared via collaborator access to specific peers |
+| Repo hosting | Two private repos under {{GITHUB_EMU_USER}} | Both private; template shared via collaborator access to specific peers |
 | Branch strategy | main/work/personal (sync repo), main only (template repo) | Clean separation with universal baseline |
 | Peer sharing model | Fork-based with upstream PRs | Peers fork template, customize freely, contribute improvements back via PRs |
-| Persona architecture | Native 3-layer model (base + instance rules + AGENTS.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |
+| Persona architecture | Native 3-layer model (base + instance rules + persona.instructions.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |
 | Confidentiality guardrail | Layer 2 (instance rules), not base | Work-specific rule; personal machine gets different Layer 2 content |
 | Dual client support | CLI and VS Code deployment paths with auto-detection | Peers use whichever client they prefer; init script handles both |
 | Skills portability | Same SKILL.md format for CLI and VS Code (open standard) | No separate deployment needed; `~/.copilot/skills/` shared by both |
