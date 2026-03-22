@@ -66,12 +66,12 @@ If `stream_url` is provided and **Path B2 (API interception) failed** (API URL n
 
 **Important:** Before using any Playwright/browser tools, you MUST check and acquire the Playwright lock:
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 check
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 acquire
+pwsh ~/.copilot/scripts/playwright-lock.ps1 check
+pwsh ~/.copilot/scripts/playwright-lock.ps1 acquire
 ```
 When finished with the browser, release it:
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 release
+pwsh ~/.copilot/scripts/playwright-lock.ps1 release
 ```
 
 #### Stream Transcript Capture Procedure
@@ -403,14 +403,14 @@ This ensures the calling agent/skill always gets a file at `output_path` — eit
 
 ```
 # BEFORE any Playwright tool call:
-1. Check: pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 check
+1. Check: pwsh ~/.copilot/scripts/playwright-lock.ps1 check
 2. If LOCKED → DO NOT use Playwright. Skip to next acquisition path.
    Do NOT wait or retry — another session owns the lock.
-3. If AVAILABLE → Acquire: pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 acquire
+3. If AVAILABLE → Acquire: pwsh ~/.copilot/scripts/playwright-lock.ps1 acquire
 4. Set internal flag: playwright_lock_held = true
 
 # AFTER all Playwright work is complete (success OR failure):
-5. Release: pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 release
+5. Release: pwsh ~/.copilot/scripts/playwright-lock.ps1 release
 6. Clear flag: playwright_lock_held = false
 
 # SAFETY NET — at the very end of ALL processing, before returning:

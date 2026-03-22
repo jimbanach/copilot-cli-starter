@@ -1,4 +1,4 @@
-# Effective Project Prompts for Copilot CLI
+# Effective New Project Prompts for Copilot CLI
 
 How to write great "new project" prompts that give Copilot CLI everything it needs to hit the ground running.
 
@@ -19,11 +19,11 @@ Every strong project prompt includes these six pieces:
 | # | Element | What to Include | Example |
 |---|---------|----------------|---------|
 | 1 | **Action** | A clear verb — what you're asking Copilot to do | "startup a new project", "create a project for..." |
-| 2 | **Name & Scope** | Project name + what's in scope (and what's adjacent but separate) | "Cloud Migration Planning workshop — includes any cloud readiness activities rolled into Enterprise Architecture Workshops" |
+| 2 | **Name & Scope** | Project name + what's in scope (and what's adjacent but separate) | "Data Security Envisioning workshop — includes any Data Security activities rolled into ABS workshops" |
 | 3 | **Data Locations** | Exact file paths with a note on what each folder contains | "Two OneDrive folders: `~/OneDrive/.../Workshop Materials` (slide decks, handouts) and `~/OneDrive/.../Planning` (timelines, notes)" |
-| 4 | **Communication Channels** | Teams chats/meetings **by name AND type** (group chat, meeting, channel) | "Teams meeting: 'Cloud Migration Weekly Sync'; Group chat: 'Migration Workshop Planning'" |
-| 5 | **People & Roles** | Who's involved, who owns what, and your influence level | "Alex owns the content; I'm a contributor/reviewer with strong influence on direction" |
-| 6 | **Work Tracking** | ADO project, GitHub repo, Planner board, or whatever tracks tasks | "Tracked in the Engineering-Team ADO project" |
+| 4 | **Communication Channels** | Teams chats/meetings **by name AND type** (group chat, meeting, channel) | "Teams meeting: 'Data Security Weekly Sync'; Group chat: 'DS Workshop Planning'" |
+| 5 | **People & Roles** | Who's involved, who owns what, and your influence level | "Francois owns the content; I'm a contributor/reviewer with strong influence on direction" |
+| 6 | **Work Tracking** | ADO project, GitHub repo, Planner board, or whatever tracks tasks | "Tracked in the SCI-COE ADO project" |
 
 > 💡 **Tip:** Don't say "check Teams." Say which Teams item, and whether it's a group chat, a meeting chat, or a channel. Copilot uses WorkIQ to search, and the item type changes how it queries.
 
@@ -50,22 +50,22 @@ Here's an actual project prompt, broken down element by element:
 
 > **[Action]** "we need to startup a new project."
 >
-> **[Name & Scope]** "This one is going to be the Cloud Migration Planning workshop project. This is the project where i will collaborate with Alex Chen on the Cloud Migration Planning workshop as well as any Cloud Readiness Activities that get incorporated into the Enterprise Architecture Workshops."
+> **[Name & Scope]** "This one is going to be the Data Security Envisioning workshop project. This is the project where i will collaborate with Francois van Hemert on the Data Security Envisioning workshop as well as any Data Security Activities that get incorporated into the ABS Copilot + Power Workshops."
 >
-> **[Data Locations]** "There are two folder paths in my one drive where the content is stored: `~/OneDrive - Microsoft/Documents/Workshops/Cloud Migration Planning` (workshop decks and handouts) and `~/OneDrive - Microsoft/Documents/Planning/Cloud Migration` (timelines, agendas, meeting notes)."
+> **[Data Locations]** "There are two folder paths in my one drive where the content is stored: `~/OneDrive - Microsoft/Documents/Workshops/Data Security Envisioning` (workshop decks and handouts) and `~/OneDrive - Microsoft/Documents/Planning/Data Security` (timelines, agendas, meeting notes)."
 >
-> **[Communication Channels]** "We also talk about this in meetings and chats so you will have to use WorkIQ. 4 Teams items to look at are: 'Cloud Migration Planning Sync' (recurring meeting), 'Migration Workshop Planning' (group chat), 'Enterprise Architecture Workshop Coordination' (group chat), and 'Cloud Migration Updates' (Teams channel)."
+> **[Communication Channels]** "We also talk about this in meetings and chats so you will have to use WorkIQ. 4 Teams items to look at are: 'Data Security Envisioning Sync' (recurring meeting), 'DS Workshop Planning' (group chat), 'ABS Workshop Coordination' (group chat), and 'Data Security Updates' (Teams channel)."
 >
-> **[People & Roles]** "Alex is the primary owner of all of the workshop content and i am a contributer and reviewer but my feedback has strong weight."
+> **[People & Roles]** "Francois is the primary owner of all of the workshop content and i am a contributer and reviewer but my feedback has strong weight."
 >
-> **[Work Tracking]** "We also track this work in the Engineering-Team ADO project."
+> **[Work Tracking]** "We also track this work in the SCI-COE ADO project."
 
 ---
 
 ### What Makes This Good
 
 ✅ Clear action verb — no ambiguity about what's being asked
-✅ Scope includes adjacent work (Enterprise Architecture Workshops) so Copilot knows the boundary
+✅ Scope includes adjacent work (ABS workshops) so Copilot knows the boundary
 ✅ File paths are explicit — Copilot can load content immediately
 ✅ Teams items are named AND typed — WorkIQ can find them
 ✅ Influence level is stated — Copilot knows how to frame suggestions (direct vs. deferential)
@@ -77,17 +77,17 @@ The prompt above covers all 6 core elements but skips the 4 recommended addition
 
 ---
 
-> We need to startup a new project. This one is going to be the **Cloud Migration Planning workshop** project. This is the project where I will collaborate with Alex Chen on the Cloud Migration Planning workshop as well as any Cloud Readiness Activities that get incorporated into the Enterprise Architecture Workshops.
+> We need to startup a new project. This one is going to be the **Data Security Envisioning workshop** project. This is the project where I will collaborate with Francois van Hemert on the Data Security Envisioning workshop as well as any Data Security Activities that get incorporated into the ABS Copilot + Power Workshops.
 >
-> There are two folder paths in my OneDrive where the content is stored: `~/OneDrive - Microsoft/Documents/Workshops/Cloud Migration Planning` (workshop decks and handouts) and `~/OneDrive - Microsoft/Documents/Planning/Cloud Migration` (timelines, agendas, meeting notes).
+> There are two folder paths in my OneDrive where the content is stored: `~/OneDrive - Microsoft/Documents/Workshops/Data Security Envisioning` (workshop decks and handouts) and `~/OneDrive - Microsoft/Documents/Planning/Data Security` (timelines, agendas, meeting notes).
 >
-> We also talk about this in meetings and chats so you will have to use WorkIQ. 4 Teams items to look at are: 'Cloud Migration Planning Sync' (recurring meeting), 'Migration Workshop Planning' (group chat), 'Enterprise Architecture Workshop Coordination' (group chat), and 'Cloud Migration Updates' (Teams channel).
+> We also talk about this in meetings and chats so you will have to use WorkIQ. 4 Teams items to look at are: 'Data Security Envisioning Sync' (recurring meeting), 'DS Workshop Planning' (group chat), 'ABS Workshop Coordination' (group chat), and 'Data Security Updates' (Teams channel).
 >
-> Alex is the primary owner of all of the workshop content and I am a contributor and reviewer but my feedback has strong weight. We also track this work in the Engineering-Team ADO project.
+> Francois is the primary owner of all of the workshop content and I am a contributor and reviewer but my feedback has strong weight. We also track this work in the SCI-COE ADO project.
 >
 > **[Persona]** Use the **deep-technical** persona for this project.
 >
-> **[Current Phase]** We're in early planning — Alex has a draft deck but no content has been reviewed yet.
+> **[Current Phase]** We're in early planning — Francois has a draft deck but no content has been reviewed yet.
 >
 > **[Constraints]** All product references must use GA features only — nothing in preview or private preview.
 >

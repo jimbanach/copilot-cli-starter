@@ -160,13 +160,13 @@ Each machine gets a local `instance-config.json` (gitignored) created during ini
 {
   "instance_name": "work",
   "user_display_name": "{{YOUR_NAME}}",
-  "workspace_path": "~/OneDrive - Microsoft/CopilotWorkspace",
+  "workspace_path": "{{WORKSPACE_PATH}}",
   "project_script_path": "~/.copilot/New-CopilotProject.ps1",
-  "github_account": "{{GITHUB_EMU_USER}}",
+  "github_account": "{{YOUR_NAME}}banach_microsoft",
   "available_environments": ["native", "wsl", "docker"],
   "docker_version": "29.2.0",
   "mcp_profile": "work",
-  "repo_remote": "{{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git",
+  "repo_remote": "git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git",
   "repo_local_path": "~/copilot-cli-config",
   "branch": "work"
 }
@@ -178,7 +178,7 @@ Personal instance would have:
   "instance_name": "personal",
   "user_display_name": "{{YOUR_NAME}}",
   "workspace_path": "~/OneDrive/CopilotWorkspace",
-  "github_account": "{{GITHUB_USER}}",
+  "github_account": "{{YOUR_NAME}}banach",
   "available_environments": ["native", "wsl", "docker"],
   "mcp_profile": "universal",
   "branch": "personal"
@@ -375,7 +375,7 @@ Local `~/.copilot/.copilot-sync/sync-state.json` (gitignored):
 
 ### First Time (Personal Laptop — consuming the repo)
 
-1. Clone the repo: `git clone {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git`
+1. Clone the repo: `git clone git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git`
 2. Checkout `personal` branch (created from `main`)
 3. Run `init.ps1`
 4. Script prompts for instance details
@@ -399,7 +399,7 @@ Local `~/.copilot/.copilot-sync/sync-state.json` (gitignored):
 1. **`.gitignore` is strict** — config.json, permissions, sessions, logs, __pycache__ are all excluded
 2. **CopilotWorkspace and GitHubProjects projects are NEVER in the repo** — they stay in OneDrive/local only
 3. **MCP configs are split** — WorkIQ stays on the work branch only
-4. **Sync skill flags instance-specific content** — if a file contains patterns like `OneDrive - Microsoft`, `{{GITHUB_EMU_USER}}`, or work-specific paths, it warns before pushing to main
+4. **Sync skill flags instance-specific content** — if a file contains patterns like `OneDrive - Microsoft`, `{{YOUR_NAME}}banach_microsoft`, or work-specific paths, it warns before pushing to main
 5. **Branch isolation** — work branch and personal branch never need to be checked out on the wrong machine
 6. **Sync state tracks skips** — if {{YOUR_NAME}} says "don't sync this" for a file, it remembers and won't ask again until the file changes
 7. **Template repo is internal-only** — private repo shared via collaborator access; peers are Microsoft employees
@@ -590,7 +590,7 @@ Copy this into Copilot CLI on your new machine:
 
 I need to restore my Copilot CLI environment from my config repo. Here's what to do:
 
-1. Clone my private repo: git clone {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-config.git ~/copilot-cli-config
+1. Clone my private repo: git clone git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-config.git ~/copilot-cli-config
 2. Run the init script: ~/copilot-cli-config/init.ps1
 3. When prompted, configure this as my [work/personal] instance
 4. After setup, verify by running: Switch-CopilotPersona.ps1 -List
@@ -927,7 +927,7 @@ $env:COPILOT_CUSTOM_INSTRUCTIONS_DIRS = ""  # or remove if wasn't set
 
 **Phase 5a Gate:**
 - **Automated test script (`test-phase5a.ps1`):**
-  - Verifies no occurrence of "{{YOUR_NAME}}" or "{{GITHUB_USER}}" in template repo (only `{{YOUR_NAME}}`)
+  - Verifies no occurrence of "{{YOUR_NAME}}" or "{{YOUR_NAME}}banach" in template repo (only `{{YOUR_NAME}}`)
   - Verifies no specific workspace paths (only `{{WORKSPACE_PATH}}`)
   - Verifies voice-profile.md is blank template (not {{YOUR_NAME}}'s profile)
   - Verifies template `init.ps1` runs without errors in dry-run mode
@@ -1185,7 +1185,7 @@ When {{YOUR_NAME}} publishes improvements to the template repo, peers can pull t
 
 ```powershell
 # One-time: add upstream remote
-git remote add upstream {{EMAIL}}:{{GITHUB_EMU_USER}}/copilot-cli-starter.git
+git remote add upstream git@github.com:{{YOUR_NAME}}banach_microsoft/copilot-cli-starter.git
 
 # Pull updates
 git fetch upstream
@@ -1236,7 +1236,7 @@ The issue templates include a field for "Environments affected" so fixes are tra
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Repo hosting | Two private repos under {{GITHUB_EMU_USER}} | Both private; template shared via collaborator access to specific peers |
+| Repo hosting | Two private repos under {{YOUR_NAME}}banach_microsoft | Both private; template shared via collaborator access to specific peers |
 | Branch strategy | main/work/personal (sync repo), main only (template repo) | Clean separation with universal baseline |
 | Peer sharing model | Private template repo + collaborator access | Internal audience only; peers fork and customize their own copy |
 | Persona architecture | Native 3-layer model (base + instance rules + persona.instructions.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |
@@ -1254,7 +1254,7 @@ The issue templates include a field for "Environments affected" so fixes are tra
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Repo hosting | Two private repos under {{GITHUB_EMU_USER}} | Both private; template shared via collaborator access to specific peers |
+| Repo hosting | Two private repos under {{YOUR_NAME}}banach_microsoft | Both private; template shared via collaborator access to specific peers |
 | Branch strategy | main/work/personal (sync repo), main only (template repo) | Clean separation with universal baseline |
 | Peer sharing model | Fork-based with upstream PRs | Peers fork template, customize freely, contribute improvements back via PRs |
 | Persona architecture | Native 3-layer model (base + instance rules + persona.instructions.md via COPILOT_CUSTOM_INSTRUCTIONS_DIRS) | Verified by testing; Copilot CLI loads all 3 natively; no assembly scripts needed |

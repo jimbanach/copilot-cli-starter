@@ -1,6 +1,6 @@
 ---
 name: humanizer
-description: Make AI-generated text sound natural and match Jim's writing voice. Use this skill ONLY when the user explicitly asks to humanize text — never auto-invoke. If output seems robotic, suggest running it but wait for confirmation. Triggers on explicit requests like "humanize," "make this sound natural," "this sounds like AI," "rewrite in my voice," or "clean up the tone." Combines algorithmic text processing (TextHumanize library) with a personal voice profile derived from the user's actual emails, chats, and documents.
+description: Make AI-generated text sound natural and match {{YOUR_NAME}}'s writing voice. Use this skill ONLY when the user explicitly asks to humanize text — never auto-invoke. If output seems robotic, suggest running it but wait for confirmation. Triggers on explicit requests like "humanize," "make this sound natural," "this sounds like AI," "rewrite in my voice," or "clean up the tone." Combines algorithmic text processing (TextHumanize library) with a personal voice profile derived from the user's actual emails, chats, and documents.
 ---
 
 # Humanizer
@@ -17,10 +17,10 @@ Only proceed after explicit user confirmation. The user triggers this skill by s
 
 ## Workflow
 
-1. **Read the voice profile** at `references/voice-profile.md` for Jim's tone, word choices, anti-patterns, and before/after examples
+1. **Read the voice profile** at `references/voice-profile.md` for {{YOUR_NAME}}'s tone, word choices, anti-patterns, and before/after examples
 2. **Determine scope** — is this a full document, a section, or a quick rewrite?
 3. **Run TextHumanize** for mechanical cleanup (formulaic connectors, uniform sentence length, bureaucratic vocabulary)
-4. **Apply voice profile** for Jim-specific tone adjustments that the algorithm can't catch
+4. **Apply voice profile** for {{YOUR_NAME}}-specific tone adjustments that the algorithm can't catch
 5. **Present the result** with a brief summary of what changed
 
 ## Step 1: Algorithmic Processing
@@ -44,7 +44,7 @@ TextHumanize handles: formulaic connectors, bureaucratic vocabulary, uniform sen
 
 ## Step 2: Voice Profile Application
 
-After algorithmic processing, apply Jim's voice profile (read `references/voice-profile.md`). Key rules:
+After algorithmic processing, apply {{YOUR_NAME}}'s voice profile (read `references/voice-profile.md`). Key rules:
 
 **Kill these on sight:**
 - "It's important to note that..." — just state it
@@ -63,7 +63,7 @@ After algorithmic processing, apply Jim's voice profile (read `references/voice-
 - Match formality to context: lowercase for chat, standard for email, formal for documents
 
 **Preserve:**
-- Jim's collaborative invitations: "let me know," "any thoughts"
+- {{YOUR_NAME}}'s collaborative invitations: "let me know," "any thoughts"
 - Honest uncertainty: "I don't have direct knowledge on this one"
 - Dry humor when contextually appropriate
 

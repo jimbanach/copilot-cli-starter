@@ -26,7 +26,7 @@ Categorize each message into:
 For each message, provide:
 - **From**: sender name
 - **Subject**: one-line summary
-- **Action needed**: what Jim needs to do (if anything)
+- **Action needed**: what {{YOUR_NAME}} needs to do (if anything)
 - **Deadline**: if any is mentioned or implied
 
 Lead with action items and decisions, not narrative recaps.

@@ -40,10 +40,10 @@ Manages bidirectional sync between the local `~/.copilot/` setup and the `copilo
 
 🆕 New in repo (not in local):
    • skills/config-sync/SKILL.md
-   • personas/new-persona/AGENTS.md
+   • personas/new-persona/persona.instructions.md
 
 ⚠️  Updated in repo (differs from local):
-   • personas/productivity/AGENTS.md
+   • personas/productivity/persona.instructions.md
    • skills/humanizer/SKILL.md
 
 📁 Local-only (not in repo):
@@ -100,7 +100,7 @@ What would you like to do?
 Changes to push to 'work' branch:
 
 📝 Modified:
-   • personas/architect-marketer/AGENTS.md
+   • personas/architect-marketer/persona.instructions.md
    • skills/humanizer/references/voice-profile.md
 
 🆕 New (local-only):
@@ -110,7 +110,7 @@ Changes to push to 'work' branch:
    • skills/my-new-skill/SKILL.md contains 'OneDrive - Microsoft'
 ```
 
-4. Jim approves per-file or per-category
+4. {{YOUR_NAME}} approves per-file or per-category
 5. Commit and push to the instance branch (work/personal)
 6. Update `sync-state.json`
 
@@ -121,7 +121,7 @@ Changes to push to 'work' branch:
 **Steps:**
 1. Compare the current instance branch against `main`
 2. Show changes that exist on the instance branch but not on main
-3. Jim selects which changes to promote
+3. {{YOUR_NAME}} selects which changes to promote
 4. Create a commit on `main` (or a PR if preferred)
 5. Push to `origin/main`
 
@@ -143,7 +143,7 @@ Changes to push to 'work' branch:
 
 Instance:     work
 Branch:       work
-GitHub acct:  jimbanach ✅
+GitHub acct:  {{YOUR_NAME}}banach ✅
 Last pull:    2026-03-01 12:30 UTC
 Last push:    2026-03-01 10:15 UTC
 
@@ -167,7 +167,7 @@ Last push:    2026-03-01 10:15 UTC
 **Steps:**
 1. Run `scripts/sanitize.py` against the `main` branch content
 2. Show what will be published with a diff preview vs current template repo
-3. Jim reviews and approves
+3. {{YOUR_NAME}} reviews and approves
 4. Commit and push to `copilot-cli-starter` repo
 5. Update CHANGELOG.md in both repos
 
@@ -178,7 +178,7 @@ Location: `~/.copilot/.copilot-sync/sync-state.json` (gitignored, never shared)
 ```json
 {
   "instance": "work",
-  "repo_path": "C:\\Users\\jimbanach\\copilot-cli-config",
+  "repo_path": "C:\\Users\\{{YOUR_NAME}}banach\\copilot-cli-config",
   "last_pull": "2026-03-01T12:30:00Z",
   "last_push": "2026-03-01T10:15:00Z",
   "skipped_items": [

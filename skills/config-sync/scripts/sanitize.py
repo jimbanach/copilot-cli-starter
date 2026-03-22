@@ -5,7 +5,7 @@ Replaces user-specific names, paths, and sensitive content with {{variables}}.
 Blanks the humanizer voice profile. Scans for potentially confidential patterns.
 
 Usage:
-    python sanitize.py <source_dir> <output_dir> [--user-name "Jim"] [--workspace-path "..."] [--dry-run] [--json]
+    python sanitize.py <source_dir> <output_dir> [--user-name "{{YOUR_NAME}}"] [--workspace-path "..."] [--dry-run] [--json]
 """
 
 import argparse
@@ -106,7 +106,7 @@ def build_replacements(user_name, workspace_path, github_account=None):
         replacements.append((workspace_norm, '{{WORKSPACE_PATH}}'))
         replacements.append((workspace_fwd, '{{WORKSPACE_PATH}}'))
         # Also match with ~ prefix
-        replacements.append(('~/OneDrive - Microsoft/CopilotWorkspace', '{{WORKSPACE_PATH}}'))
+        replacements.append(('{{WORKSPACE_PATH}}', '{{WORKSPACE_PATH}}'))
 
     if github_account:
         replacements.append((github_account, '{{GITHUB_ACCOUNT}}'))
@@ -243,9 +243,9 @@ def main():
     parser = argparse.ArgumentParser(description='Sanitize config for peer template')
     parser.add_argument('source_dir', help='Path to source (repo main branch content)')
     parser.add_argument('output_dir', help='Path to output (template repo)')
-    parser.add_argument('--user-name', default='Jim', help='User name to replace')
+    parser.add_argument('--user-name', default='{{YOUR_NAME}}', help='User name to replace')
     parser.add_argument('--workspace-path',
-                        default=os.path.expanduser('~/OneDrive - Microsoft/CopilotWorkspace'),
+                        default=os.path.expanduser('{{WORKSPACE_PATH}}'),
                         help='Workspace path to replace')
     parser.add_argument('--github-account', default=None, help='GitHub account to replace')
     parser.add_argument('--dry-run', action='store_true', help='Preview without writing files')

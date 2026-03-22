@@ -235,7 +235,7 @@ Use the short IDs below to tag artifacts, session notes, and review items so the
 ### Tagging Rules
 - Tag artifacts with ``Workstreams:`` metadata when the workstream is clear (e.g., ``Workstreams: general``)
 - Multi-tag when content spans workstreams (e.g., ``Workstreams: design, implementation``)
-- If the right tag is unclear, ask Jim rather than guessing
+- If the right tag is unclear, ask {{YOUR_NAME}} rather than guessing
 - New workstreams can be added as the project evolves
 "@
     Set-Content -Path "$projectPath\.github\copilot-instructions.md" -Value $instructions

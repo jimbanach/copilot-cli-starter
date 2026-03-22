@@ -13,7 +13,7 @@ This skill orchestrates the `image-gen` MCP server tools to produce AI-generated
 Generate images from text prompts. Auto-selects the best available model if none specified.
 - **prompt** (required): Descriptive text for the image
 - **model** (optional): Specific model ID — omit for auto-selection
-- **quality**: `high` (default), `medium`, `low`, `auto`
+- **quality**: `medium` (default via env), `high`, `low`, `auto` — only use `high` if the user explicitly requests it
 - **size**: `1024x1024` (default), `1536x1024`, `1024x1536`
 - **n**: Number of images (1-10)
 - **background**: `transparent`, `opaque`, `auto`
@@ -21,11 +21,11 @@ Generate images from text prompts. Auto-selects the best available model if none
 - **output_dir**: Override the default save directory
 
 ### `edit_image`
-Edit an existing image using AI (requires Azure OpenAI GPT-Image-1).
+Edit an existing image using AI (requires Azure OpenAI GPT-Image-1.5 or GPT-Image-1).
 - **image** (required): Absolute file path to source image
 - **prompt** (required): Description of the desired edit
 - **mask** (optional): Absolute file path to a mask image (transparent areas = edit zones)
-- **model**: Defaults to `gpt-image-1`
+- **model**: Defaults to `gpt-image-1.5`
 - **quality**, **size**, **n**, **output_dir**: Same as generate_image
 
 ### `recommend_model`
@@ -65,7 +65,7 @@ Write detailed, descriptive prompts. The quality of the output depends heavily o
 
 ### 3. Choose the Right Parameters
 - **Logos, icons, stickers** → `background: "transparent"`, `output_format: "png"`
-- **Presentation slides** → `size: "1536x1024"` (landscape), `quality: "high"`
+- **Presentation slides** → `size: "1536x1024"` (landscape) — medium quality is fine for slides
 - **Portrait/headshot** → `size: "1024x1536"`
 - **Quick drafts** → `quality: "medium"` to save cost
 - **Multiple options** → `n: 3` to generate variants
@@ -85,7 +85,7 @@ If the user isn't happy with the result:
 ## Model Availability
 The MCP auto-discovers available models from configured providers:
 - **Azure AI Foundry**: FLUX.2 Flex — good all-rounder, strong photorealism and text. This will be our default in most scenarios due to its balance of quality and cost. It's a great choice for general image generation needs.
-- **Azure OpenAI**: GPT-Image-1 — best for editing, text rendering, and complex compositions. It's good, but more expensive, so we recommend using it when you need its specific strengths. For general image generation, FLUX.2 Flex is often sufficient and more cost-effective.
+- **Azure OpenAI**: GPT-Image-1.5 (preferred) / GPT-Image-1 — best for editing, text rendering, and complex compositions. More expensive than FLUX, so we recommend using it when you need its specific strengths. For general image generation, FLUX.2 Flex is often sufficient and more cost-effective. You should never use this on a first pass, only if a user specifies it specifially or says they really don't like the other generation.
 
 
 If no model is specified, the MCP auto-selects the best match based on the prompt content. Use `recommend_model` when the user wants to compare options.
@@ -97,7 +97,7 @@ Every generation incurs cost. Treat image generation as a deliberate action, not
 - **Don't generate speculatively.** Only call `generate_image` when you have a clear, confirmed intent. If you're unsure what the user wants, describe the image you'd create and ask first.
 - **One at a time.** Generate a single image and confirm it meets the need before generating more. Don't batch-generate "just in case."
 - **Use `n: 1` (default).** Only generate multiple variants (`n: 2+`) if the user explicitly asks for options.
-- **Use `quality: "medium"` for drafts.** Switch to `"high"` only for final/approved versions.
+- **Default to `quality: "medium"`.** The MCP server is configured to default to medium quality via `IMAGE_DEFAULT_QUALITY`. This is sufficient for the vast majority of use cases — presentations, social media posts, documents, and drafts. Only use `quality: "high"` when the user **explicitly requests** high quality, print-resolution output, or a polished final asset where the extra detail matters. The cost difference is significant (~$0.04 vs ~$0.17+ per image) and the quality difference is invisible in most delivery formats (PowerPoint slides, Facebook posts, Teams messages, etc.).
 - **Don't regenerate for minor tweaks.** If the user asks to change text overlaid on an image, adjust the text — don't regenerate the image. Use `edit_image` for targeted changes to existing images.
 - **When invoked by other skills** (PPTX, DOCX, content-drafting): those skills are responsible for proposing images and getting user approval before calling generation. Respect their workflow.
 

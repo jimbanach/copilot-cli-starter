@@ -32,7 +32,7 @@ The heavy lifting is done by a PowerShell bootstrap script located at:
 ~/.copilot/agents/scripts/setup-squad.ps1
 ```
 
-Full path: `C:\Users\jimbanach\.copilot\agents\scripts\setup-squad.ps1`
+Full path: `~/.copilot/agents/scripts/setup-squad.ps1`
 
 ### Script Actions
 

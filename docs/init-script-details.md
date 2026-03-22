@@ -77,7 +77,7 @@ On first deploy (no existing file), falls back to a straight copy. If the existi
 
 ### 9. Set Default Persona
 
-Deploys the default persona's `AGENTS.md` into `personas/active/AGENTS.md` (Layer 3).
+Deploys the default persona's `persona.instructions.md` into `personas/active/.github/instructions/persona.instructions.md` (Layer 3).
 
 ### 10. Summary & Next Steps
 

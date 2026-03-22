@@ -2,15 +2,7 @@
 
 Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync.
 
-## 🙋 Help Wanted — We Need Testers!
-
-This project is ready for peer adoption, but we need help validating a few scenarios. If you can spare 30 minutes, pick one and report your experience:
-
-| # | Scenario | Who can help |
-|---|----------|-------------|
-| **VS Code** | [Validate full setup in VS Code](../../issues?q=is%3Aissue+is%3Aopen+VS+Code) | Anyone using GitHub Copilot in VS Code |
-| **WSL/Linux** | [Validate setup on WSL / Linux](../../issues?q=is%3Aissue+is%3Aopen+WSL) | Anyone running WSL or native Linux |
-| **New User** | [End-to-end onboarding test](../../issues?q=is%3Aissue+is%3Aopen+onboarding) | Anyone who's never used this system before |
+**NOTE**  If you are not {{YOUR_NAME}}, please do not commit or add anything to this repo.  Please use the CLI-Starter and build your own setup from there.  All improvements here will be added to the starter repo.  I do not have a way to limit PR's and Commits on this repo or it's branches as i'm not paying for GH Teams. 
 
 ## Quick Links
 
@@ -46,12 +38,12 @@ The `init.ps1` script checks for these automatically and exits with install link
 
 ## Account Setup
 
-This repo is hosted under your regular GitHub account (not enterprise-managed).
+This repo is hosted under `{{YOUR_NAME}}banach` (regular GitHub account, not enterprise-managed). Both work and personal machines access it through this account.
 
 | Machine | gh CLI account | Role |
 |---------|---------------|------|
-| **Primary machine** | Your GitHub account | Push to `main` branch |
-| **Secondary machine** | Same account or collaborator | Push to feature branches |
+| **Work machine** | `{{YOUR_NAME}}banach` | Push to `work` branch, merge to `main` |
+| **Personal laptop** | `jrbanach` (collaborator) | Push to `personal` branch, merge to `main` |
 
 ### Switching Accounts
 
@@ -76,7 +68,7 @@ Copilot CLI natively loads instructions from multiple locations. This setup uses
 graph TD
     L1["🟦 Layer 1: Base\ncopilot-instructions.md\nWorkspace, skills, behaviors"]
     L2["🟨 Layer 2: Instance Rules\ninstance.instructions.md\nMachine-specific (work/personal)"]
-    L3["🟩 Layer 3: Active Persona\npersona.instructions.md\nRole-specific tone & focus\n(applyTo: '**' frontmatter)"]
+    L3["🟩 Layer 3: Active Persona\npersona.instructions.md\nRole-specific tone & focus"]
     OUT["Complete instruction set\nfor Copilot CLI"]
 
     L1 --> OUT
@@ -90,12 +82,12 @@ graph TD
 |-------|---------|-----------|-------------|
 | **1. Base** | Workspace structure, skills catalog, persona list, general behaviors | `~/.copilot/copilot-instructions.md` | When adding new skills, changing workspace structure, or updating universal behaviors |
 | **2. Instance** | Machine-specific rules (work: confidentiality, paths; personal: personal rules) | `~/.copilot/personas/active/.github/instructions/instance.instructions.md` | Rarely — only when instance rules change |
-| **3. Persona** | Role-specific tone, behaviors, domain expertise | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` | Never edit directly — use `Switch-CopilotPersona.ps1` |
+| **3. Persona** | Role-specific tone, behaviors, domain expertise (`applyTo: "**"` frontmatter) | `~/.copilot/personas/active/.github/instructions/persona.instructions.md` | Never edit directly — use `Switch-CopilotPersona.ps1` |
 
 ### How Layers Are Loaded
 
 - **Layer 1:** Copilot CLI always loads `~/.copilot/copilot-instructions.md` as the user-level instruction file
-- **Layers 2 & 3:** The environment variable `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` points to `~/.copilot/personas/active/`. Copilot CLI finds `.github/instructions/*.instructions.md` files via auto-discovery:
+- **Layers 2 & 3:** The environment variable `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` points to `~/.copilot/personas/active/`. Copilot CLI finds:
   - `.github/instructions/persona.instructions.md` → Layer 3 (persona, with `applyTo: "**"` frontmatter)
   - `.github/instructions/instance.instructions.md` → Layer 2 (instance rules)
 
@@ -132,7 +124,6 @@ code ~/.copilot/personas/productivity/persona.instructions.md
 
 The `Switch-CopilotPersona.ps1` script manages Layer 3. It:
 - Copies the selected persona's `persona.instructions.md` into `personas/active/.github/instructions/persona.instructions.md`
-- Supports fallback chain: `persona.instructions.md` → `AGENTS.md` (legacy) for backwards compatibility
 - **Never touches Layers 1 or 2**
 - Auto-detects new personas: if you add a new persona directory, the script automatically adds it to the Layer 1 persona list
 - Supports `-Target` parameter: `cli`, `vscode`, `all`, or `auto` (default)
@@ -165,7 +156,7 @@ copilot-cli-config/
 │       └── personal.instructions.md       # Layer 2: personal machine rules
 │
 ├── personas/                              # Layer 3: one persona.instructions.md per persona
-│   ├── productivity/persona.instructions.md   # applyTo: "**" frontmatter
+│   ├── productivity/persona.instructions.md
 │   ├── deep-technical/persona.instructions.md
 │   └── ...                                # See Available Personas table above
 │
@@ -175,9 +166,8 @@ copilot-cli-config/
 │   └── ...                                # 16+ skills total
 │
 ├── agents/                                # Custom agent profiles (.agent.md)
-│   ├── meeting-transcript-processor.agent.md
-│   ├── slide-architect.agent.md
-│   └── scripts/
+│   ├── meeting-notes-summarizer.agent.md
+│   └── ...                                # + scripts/
 │
 ├── scripts/                               # Utility scripts
 │   ├── New-CopilotProject.ps1
@@ -185,15 +175,17 @@ copilot-cli-config/
 │
 └── mcp/                                   # MCP server configs
     ├── mcp-config.universal.json          # CLI: Playwright + MS Docs
+    ├── mcp-config.work.json               # CLI: + WorkIQ
     └── mcp.vscode.universal.json          # VS Code format
 ```
 
 ### Branch Strategy
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Primary branch — deploy from here |
-| Feature branches | For testing changes before merging to `main` |
+| Branch | Purpose | Who pushes |
+|--------|---------|------------|
+| `main` | Universal baseline — shared across all instances | Either machine, after review |
+| `work` | Work-specific additions and overrides | Work machine only |
+| `personal` | Personal-specific additions and overrides | Personal laptop only |
 
 ### What's NOT in the Repo
 
@@ -205,8 +197,7 @@ copilot-cli-config/
 | `session-state/`, `session-store.db` | Runtime/chat history |
 | `logs/`, `ide/`, `pkg/` | Runtime data |
 | `_disabled/` | Locally disabled agents/skills — place items here to deactivate without deleting |
-| `.copilot/` | Project-level session state (Save State Protocol) |
-| `CopilotWorkspace/` projects | Project data |
+| `CopilotWorkspace/` projects | Company-confidential project data |
 | `GitHubProjects/` projects | GitHub-backed projects (separate repos) |
 | `__pycache__/`, `*.pyc` | Python bytecode |
 
@@ -214,11 +205,11 @@ copilot-cli-config/
 
 | Type | Location | Synced by |
 |------|----------|-----------|
-| Local-only projects | `CopilotWorkspace/` | Cloud sync or manual |
+| Local-only projects | `CopilotWorkspace/` (OneDrive) | OneDrive |
 | GitHub-backed projects | `GitHubProjects/` | Git/GitHub |
-| Forwarding references | `CopilotWorkspace/<name>/` with MOVED-TO-GITHUB.md | Cloud sync |
+| Forwarding references | `CopilotWorkspace/<name>/` with MOVED-TO-GITHUB.md | OneDrive |
 
-GitHub-backed projects should not live in cloud-sync folders. Use `New-CopilotProject.ps1 -GitHub` to create projects in the right location with a forwarding folder.
+GitHub-backed projects must NOT live in OneDrive. Use `New-CopilotProject.ps1 -GitHub` to create projects in the right location with a forwarding folder.
 
 ## Init Script
 
@@ -275,19 +266,23 @@ The `config-sync` skill manages bidirectional sync between your local `~/.copilo
 | "Share my setup" | Detects local changes, flags instance-specific content, pushes to your branch |
 | "Promote to main" | Moves changes from your instance branch to `main` for cross-machine sharing |
 | "Sync status" | Dashboard: last pull/push, pending changes, skipped items |
+| "Publish template" | Sanitizes and pushes to `copilot-cli-starter` for peers |
 
 ### How It Works
 
 ```mermaid
 graph LR
     LOCAL["~/.copilot/\n(local setup)"]
-    REPO["your-config-repo\n(this repo)"]
+    REPO["copilot-cli-config\n(this repo)"]
+    TEMPLATE["copilot-cli-starter\n(peer template)"]
 
     LOCAL -- "check for updates" --> REPO
     LOCAL -- "share my setup" --> REPO
+    REPO -- "publish template" --> TEMPLATE
 
     style LOCAL fill:#d1fae5,stroke:#059669
     style REPO fill:#dbeafe,stroke:#2563eb
+    style TEMPLATE fill:#fef3c7,stroke:#d97706
 ```
 
 ### Scripts
@@ -296,11 +291,12 @@ graph LR
 |--------|---------|
 | `compare.py` | Diffs local vs repo with line-ending tolerance |
 | `sync_state.py` | Tracks pull/push history, skipped items |
+| `sanitize.py` | Replaces names/paths with `{{variables}}` for peer template |
 
 ### Known Limitations
 
-- VS Code MCP config (`%APPDATA%/Code/User/mcp.json`) is not tracked by config-sync
-- Native Linux is untested
+- VS Code MCP config (`%APPDATA%/Code/User/mcp.json`) is not tracked by config-sync — see [#26](../../issues/26)
+- Native Linux is untested — see [#19](../../issues/19)
 
 ## Reviewing Peer PRs
 
@@ -333,12 +329,6 @@ cd ~/copilot-cli-config
 # Cherry-pick or manually apply the change
 # Commit to work branch, then promote to main
 ```
-
-## Prompt Guidance
-
-Writing effective project prompts makes the difference between Copilot asking 10 follow-up questions and hitting the ground running. The **Full Context Handoff** pattern gives Copilot everything it needs — people, data locations, communication channels, and work tracking — in a single prompt.
-
-📖 **[Effective Project Prompts →](./docs/effective-project-prompts.md)** — Full pattern guide with annotated examples and a copy-paste template.
 
 ## Save State Protocol
 
@@ -389,9 +379,15 @@ Quick reference for common operations:
 | **Deploy from repo to local** | Run `init.ps1 -Mode consume` |
 | **Preview without changes** | Run `init.ps1 -DryRun` |
 | **Restore from backup** | See `~/.copilot-backups/` and RESTORE.md |
-| **Add a new persona** | Create `~/.copilot/personas/<name>/persona.instructions.md` with `applyTo: "**"` frontmatter — auto-detected on next switch |
+| **Add a new persona** | Create `~/.copilot/personas/<name>/persona.instructions.md` — auto-detected on next switch |
 | **Edit instance rules** | Edit `~/.copilot/personas/active/.github/instructions/instance.instructions.md` |
 | **Review a peer PR** | `gh pr list --repo {{YOUR_NAME}}banach/copilot-cli-starter` then `gh pr diff <N>` |
+
+## Prompt Guidance
+
+The **Full Context Handoff** pattern gives Copilot CLI everything it needs to scaffold a project in a single prompt — action, scope, data locations, communication channels, people & roles, and work tracking. Adding a persona preference, current phase, constraints, and tool/source preferences eliminates follow-up questions entirely.
+
+[Full guide → docs/effective-project-prompts.md](./docs/effective-project-prompts.md)
 
 ## Starter Prompts
 

@@ -23,7 +23,7 @@ Structure the agenda as:
 
 ## 3. Create Talking Points
 For each discussion item:
-- Draft 2-3 bullet points Jim can reference
+- Draft 2-3 bullet points {{YOUR_NAME}} can reference
 - Include relevant data points, metrics, or status updates
 - Flag any decisions that need to be made
 - Note any pre-reads or documents to reference (search OneDrive if relevant)

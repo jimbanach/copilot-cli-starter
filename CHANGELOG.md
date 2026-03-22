@@ -6,96 +6,146 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased] - 2026-03-21
 
 ### Changed
-- **BREAKING:** Renamed persona files from `AGENTS.md` to `persona.instructions.md` with `applyTo: "**"` frontmatter
-  - Eliminates naming collision with the industry-standard `AGENTS.md` convention (60k+ repos)
-  - Uses `.instructions.md` auto-discovery mechanism for reliable persona loading
-  - Migration logic in `init.ps1` detects and converts old format automatically
-- Updated `init.ps1` with dual-format support and migration prompts
-- Updated `Switch-CopilotPersona.ps1` with fallback chain (persona.instructions.md → AGENTS.md)
-- Updated `compare.py` with dual-format persona detection
-- Updated `sync_state.py` with migration tracking support
+- Renamed persona files from `AGENTS.md` to `persona.instructions.md` with `applyTo: "**"` frontmatter (#72)
+- Persona deployment path changed to `~/.copilot/personas/active/.github/instructions/persona.instructions.md`
+- Updated init.ps1, Switch-CopilotPersona.ps1, compare.py for new persona file format
+- Updated switch-persona, config-sync, and agent-builder skills
 
 ### Added
 - New `persona-creator` skill for guided persona creation and evaluation
-- Schema versioning (`config_schema_version: "2.0"`) in instance-config
+- Backward-compatible fallback chain: persona.instructions.md → AGENTS.md → copilot-instructions.md
+- Legacy AGENTS.md cleanup during deployment
 
-## [2026-03-18] - Upstream sync: multiple improvements
+## [2026-03-18] - WorkIQ proactive usage in Layer 2 work instructions
+### Added
+- Layer 2 (work): WorkIQ proactive usage guidance — agent now uses `ask_work_iq` for context enrichment, information gap filling, and people context without waiting for explicit requests
+- Layer 2 (work): Transparency rule — outputs sourced from WorkIQ marked with 📧
+- Layer 2 (work): Per-project opt-out via `workiq_enabled: false` in `project.json`
+- Layer 2 (work): Reference to `workiq-productivity` plugin capabilities (email triage, meeting costs, org charts, channel audits)
+
+## [2026-03-18] - Auto-detect environments + code-coach persona (from personal machine)
 ### Added
 - `init.ps1`: Auto-detect available environments — native, WSL, Docker (fixes #18)
-- New `image-generation` skill for AI image workflows via MCP
-- New `meeting-processing` skill for meeting transcript/notes processing
-- Updated `meeting-transcript-processor` agent with significant improvements
-- New `squad-setup` agent and bootstrap script
-- Updated `config-sync` skill with template rendering and expanded compare.py
-- Updated `content-drafting`, `docx`, `pptx` skills with new capabilities
-- New `code-coach` persona for educational coding projects
+- New `code-coach` persona for Minecraft Mod Academy
 
-## [2026-03-17] - Upstream sync: session resume auto-restores project context
+## [2026-03-17] - Session resume auto-restores project context (fixes #63)
 ### Added
 - Base instructions: On resume, agent now prompts `/cwd` if working directory changed, reads `.github/copilot-instructions.md` into context, and loads the correct persona from `project.json`
 
-## [2026-03-17] - Upstream sync: skill discovery for truncated lists
+## [2026-03-17] - Skill discovery when list is truncated (fixes #69)
 ### Added
 - Base instructions: Skill discovery guidance — when the visible skill list doesn't match a user's request, use `tool_search_tool_regex` to search for hidden skills before giving up
 
-## [2026-03-17] - Upstream sync: MCP config merge instead of overwrite
+## [2026-03-17] - MCP config merge instead of overwrite (fixes #68)
 ### Fixed
-- `init.ps1` now uses JSON-aware merge for MCP configs instead of destructive overwrite
-- Locally-added MCP servers are preserved across `init.ps1` runs
-- Sidecar file tracks repo-origin servers for removal detection
-- DryRun shows detailed merge plan (added/updated/preserved/removed)
+- `init.ps1` Step 9 now uses JSON-aware merge instead of destructive `Copy-Item -Force` for MCP configs
+- Locally-added MCP servers (e.g., azuredevops, image-gen) are preserved across `init.ps1` runs
+- Repo-defined servers are updated to latest; servers removed from repo are cleaned up
+- Sidecar file (`~/.copilot/mcp-repo-servers.json`) tracks repo-origin servers for removal detection
+- DryRun mode shows detailed merge plan (added/updated/preserved/removed)
+- Same merge logic applies to both CLI (`mcpServers`) and VS Code (`servers`) configs
 ### Changed
 - `docs/init-script-details.md` updated to reflect actual merge behavior
 
-## [2026-03-13] - Upstream sync: save state session naming
+## [2026-03-14] - Auto-detect available environments in init.ps1 (fixes #18)
+### Added
+- `init.ps1`: New `Detect-Environments` function that probes for WSL (via `wsl -l -q`) and Docker (via `docker --version`)
+- Environment detection runs during init setup and displays results with ✓/✗ indicators and details (distro name, Docker version)
+- Auto-detected environments are used as the default instead of hardcoded "native"
+- Existing config values still take precedence as defaults when reconfiguring
+
+## [2026-03-14] - Repo transfer from {{YOUR_NAME}}-s-Project-Org to {{YOUR_NAME}}banach
+### Changed
+- Transferred `copilot-cli-config` and `copilot-cli-starter` from `{{YOUR_NAME}}-s-Project-Org` org to `{{YOUR_NAME}}banach` personal account
+- Updated git remote URL to `https://github.com/{{YOUR_NAME}}banach/copilot-cli-config.git`
+- Updated starter repo remote reference in `.github/copilot-instructions.md` from `{{YOUR_NAME}}-s-Project-Org` to `{{YOUR_NAME}}banach`
+### Fixed
+- Built-in GitHub MCP server now has access to the repo (resolves #67) — the MCP token couldn't access private org repos
+
+## [2026-03-14] - Config sync re-renders templates (fixes #66)
+### Added
+- `compare.py`: New `templates` category that renders `.template` files using `instance-config.json` and compares against live deployed files
+- `compare.py`: `--apply-template <name>` flag to re-render and deploy a specific template
+- `compare.py`: `--diff templates <name>` shows what changed between rendered template and live file
+- Config-sync SKILL.md: Workflow 1 (Check for Updates) now includes template drift detection and re-rendering steps
+### Fixed
+- Template updates (e.g., new base instructions) are no longer silently missing after sync — compare.py detects drift and prompts for re-rendering
+
+## [2026-03-13] - Save state session naming
 ### Added
 - Base instructions: Save/restore flows now derive a session title from the project folder plus the current date in `MM-DD-YY` format, record it in `.copilot/session-state.md`, and surface the exact `/rename` command for the user
 - README: Save State Protocol now documents the session naming convention and `/rename` guidance
 
-## [2026-03-10] - Upstream sync: Save State Protocol
+## [2026-03-11] - Workstream tagging + cross-repo sync alignment
 ### Added
-- Base instructions: Save State Protocol — structured `.copilot/session-state.md` in project folders with session history, machine context, and resume instructions
-- `.gitignore`: Added `.copilot/` exclusion for project-level session state
-- README: New "Save State Protocol" section documenting the feature
-
-## [2026-03-05] - Upstream sync: README restructuring, prompt guidance, bug fixes
-### Added
-- `docs/effective-project-prompts.md`: Full Context Handoff pattern for writing effective project prompts
-- `docs/init-script-details.md`: Detailed init script workflow documentation
-- README: Table of contents with anchor links, Prompt Guidance section
-### Changed
-- `init.ps1`: OneDrive Known Folder Move detection, local-only file cleanup (Step 8b), COPILOT_DIR template variable
-- `New-CopilotProject.ps1`: GitHub-backed WSL projects now create in GitHubProjects with WSL symlink, distro detection
-- `base/copilot-instructions.md.template`: Per-project persona enforcement via project.json
-- `compare.py`: Respects `_disabled/` folder, prevents incorrect re-sync of disabled agents
-
-## [Unreleased]
-
-## [2026-03-04] - Upstream sync: OneDrive Known Folder Move support
+- `New-CopilotProject.ps1`: Projects now include a Tracked Workstreams section with tagging table and rules
+- Base instructions: Workstream tagging rule — populate workstream table on project setup, tag artifacts with `Workstreams:` metadata
+- Project instructions: Dual-push sync rules for starter repo (always push to both origin and emu remotes)
+- Starter repo: `playwright-lock.ps1` added, architect-marketer description updated
 ### Fixed
-- `init.ps1`: Auto-detects OneDrive Known Folder Move paths for Desktop and Documents, stores in `instance-config.json`
-- Layer 2 instance instructions: Added "Known Folder Paths" section so Copilot saves files to correct redirected locations
-- `instance-config.template.json`: Added `known_folders` field
+- Starter README: 11 content drift fixes (mermaid diagram, repo structure, account setup, branch strategy, etc.)
+- `productivity/AGENTS.md`: Removed leftover UAT test debris
+- Synced voice profile to repo
 
-## [2026-03-02b] - Upstream sync: meeting agent cleanup
+## [2026-03-10] - Agent sync + Save State Protocol
+### Added
+- `quiz-content-generator.agent.md`: New agent for generating quiz content
+- Base instructions: Save State Protocol — structured `.copilot/session-state.md` file in project folders with session IDs, machine context, status, and resume instructions. Auto-saves at checkpoints, manual trigger with "save my state"
+### Changed
+- `meeting-transcript-processor.agent.md`: Updated with local improvements
+
+## [2026-03-05] - Bug fixes, persona enforcement, README restructuring, prompt guidance
+
+### Enhanced
+- Base instructions: Agent now prompts user to run `/cwd <project-path>` when switching projects or following forwarding-folder redirects, so the CLI status bar shows the correct repo/branch
+- Fix #50: Per-project persona enforcement — agent checks `project.json` persona field when opening a project and loads the correct persona if it differs from the active one. Mid-session switches are temporary.
+- Fix #61: README restructured with table of contents and anchor links to all sections
+- Fix #62: New doc `docs/effective-project-prompts.md` — Full Context Handoff pattern with 6 core elements, 4 recommended additions, annotated real-world example, and copy-paste template
+- README: Added Quick Links entry and Prompt Guidance section linking to the new doc
+
+### Fixed
+- Fix #60: `init.ps1` now auto-detects OneDrive Known Folder Move paths for Desktop and Documents using `[Environment]::GetFolderPath()` and stores them in `instance-config.json` under `known_folders`
+- Layer 2 instance instructions now include a "Known Folder Paths" section so Copilot saves files to the correct redirected locations
+- `instance-config.template.json` updated with `known_folders` field
+- Fix #55: `compare.py` now respects `_disabled/` folder — agents in local `_disabled/` are excluded from `local_only` results, preventing incorrect re-sync
+- Fix #40: `init.ps1` now detects local-only items (removed from repo) during consume and offers Delete All / Skip All / Review Each options
+- Fix #48: `New-CopilotProject.ps1` now handles `-GitHub -Environment wsl` correctly — creates project in GitHubProjects with forwarding folder instead of delegating to WSL script
+- README: Documented `_disabled/` convention and `instance-config.json` in "What's NOT in the Repo" table
+- `init.ps1`: Added UTF-8 BOM so PowerShell 5.1 correctly parses Unicode characters (fixes #59)
+
+### Changed
+- README: Streamlined init script "What It Does" section — replaced full mermaid diagram with concise numbered steps
+- Moved detailed init workflow diagram and step-by-step breakdown to `docs/init-script-details.md`
+- README: Added "Init Script Details" to Quick Links section
+
+## [2026-03-02b] - Meeting agent cleanup
 ### Changed
 - `meeting-transcript-processor.agent.md`: Now a standalone interactive agent (no longer requires orchestrator)
 ### Removed
-- `meeting-notes-summarizer.agent.md`: Removed (unstable, under rework upstream)
-- `meeting-video-analyzer.agent.md`: Removed (unstable, under rework upstream)
+- `meeting-notes-summarizer.agent.md`: Disabled (moved to local `_disabled/`)
+- `meeting-video-analyzer.agent.md`: Disabled (moved to local `_disabled/`)
 ### Added
 - `.gitignore`: `_disabled/` pattern — agents placed in this local folder are excluded from sync
 
-## [2026-03-02] - Upstream sync: project storage + backlog fixes
+## [2026-03-02] - Backlog fixes + Project storage (#47)
 ### Added
-- `New-CopilotProject.ps1`: `-GitHub` flag, cloud-sync detection, forwarding folder pattern
-- Base instructions template: "Project Storage Rules" section with `{{GITHUB_PROJECTS_PATH}}`
-- `init.ps1`: prerequisites check, account verification, backup retention, github_projects_path prompt
-- `.github/pull_request_template.md`: checklist for contributions
+- `New-CopilotProject.ps1`: `-GitHub` flag for GitHub-backed projects, cloud-sync detection, forwarding folder pattern (project.json + MOVED-TO-GITHUB.md + .lnk + copilot-instructions.md redirect)
+- Layer 1 base: "Project Storage Rules" section with forwarding folder guidance
+- `init.ps1`: prerequisites check (git, gh, python required; PowerShell 6+, Node.js optional)
+- `init.ps1`: GitHub account verification before proceeding
+- `init.ps1`: `github_projects_path` prompt and instance-config field
+- `init.ps1`: backup retention policy (subfolder `~/.copilot-backups/`, keep last 3)
+- README: "Account Setup" section with account table and switching instructions
+- README: "How To" quick reference table
+- README: "Starter Prompts" section
+- README: "Reviewing Peer PRs" section
+- `.github/copilot-instructions.md`: project-level instructions for consistent process
+- `.github/pull_request_template.md`: checklist for testing, docs, cross-repo sync
 ### Changed
-- `Switch-CopilotPersona.ps1`: detects unsaved edits before switching, CRLF-tolerant comparison
-- Config-sync SKILL.md: expanded repo discovery, account display in sync-status
-- Template-update SKILL.md: expanded repo discovery paths
+- `Switch-CopilotPersona.ps1`: detects unsaved active persona edits before switching (closest-match detection for edited personas)
+- `Switch-CopilotPersona.ps1`: line-by-line comparison for CRLF tolerance
+- Config-sync SKILL.md: sync-status shows active GitHub account, expanded repo discovery paths
+- Base template: added `{{GITHUB_PROJECTS_PATH}}` variable
 - Sync repo: Starter prompts for restore and sync check
 - Starter repo: Starter prompts for first-time setup (CLI + VS Code), updates, persona switching
 

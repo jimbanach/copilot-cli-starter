@@ -82,8 +82,8 @@ Make these WorkIQ queries (in parallel if possible):
 
 Before any browser work, acquire the lock:
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 check
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 acquire
+pwsh C:\Users\{{YOUR_NAME}}banach\.copilot/scripts/playwright-lock.ps1 check
+pwsh C:\Users\{{YOUR_NAME}}banach\.copilot/scripts/playwright-lock.ps1 acquire
 ```
 If the lock is held, tell the user and offer to retry later. **Release the lock as soon as browser work is done** — don't hold it during agent processing.
 
@@ -231,7 +231,7 @@ When Method 2 succeeds, the VTT lacks speaker names. Before releasing Playwright
 #### Release Playwright Lock
 
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 release
+pwsh C:\Users\{{YOUR_NAME}}banach\.copilot/scripts/playwright-lock.ps1 release
 ```
 
 **Always release the lock after browser work — even if extraction failed.** Do not hold the lock while the agent processes the transcript.
@@ -308,11 +308,11 @@ When the agent completes, read its output:
 **Playwright lock safety check:**
 After the agent completes (success or failure), run a safety check:
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 check
+pwsh C:\Users\{{YOUR_NAME}}banach\.copilot/scripts/playwright-lock.ps1 check
 ```
 If the lock is still held (and the agent should have released it), release it:
 ```
-pwsh C:\Users\jimbanach\.copilot/scripts/playwright-lock.ps1 release
+pwsh C:\Users\{{YOUR_NAME}}banach\.copilot/scripts/playwright-lock.ps1 release
 ```
 
 ---

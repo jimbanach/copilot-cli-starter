@@ -1,0 +1,12 @@
+{
+  "name": "copilot-cli-config",
+  "description": "Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync",
+  "persona": "hypervelocity-engineer",
+  "environment": "native",
+  "environment_reason": "PowerShell/Python config repo — no isolation needed",
+  "status": "active",
+  "created": "2026-03-01",
+  "tags": ["copilot", "cli", "config", "sync"],
+  "github_backed": true,
+  "storage_path": "C:\\Users\\{{YOUR_NAME}}banach\\GitHubProjects\\copilot-cli-config"
+}
