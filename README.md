@@ -1,10 +1,8 @@
-# Copilot CLI Config
+# Copilot CLI Starter
 
-Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync.
+Portable Copilot CLI configuration with 3-layer instruction model, persona switching, and smart sync. **Fork this repo** to build your own personalized setup.
 
 > **🚧 v2.0 Upgrade In Progress** — A major update is coming from upstream that adds execution discipline, skill chaining, project analysis, task orchestration, and implementation playbooks. Current stable release: [v1.5.1](https://github.com/jimbanach/copilot-cli-starter/releases/tag/v1.5.1).
-
-**NOTE**  If you are not {{YOUR_NAME}}, please do not commit or add anything to this repo.  Please use the CLI-Starter and build your own setup from there.  All improvements here will be added to the starter repo.  I do not have a way to limit PR's and Commits on this repo or it's branches as i'm not paying for GH Teams.
 
 ## Quick Links
 

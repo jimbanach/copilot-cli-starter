@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] - v2.0
 
-*Major upgrade in progress — see upstream [copilot-cli-config](https://github.com/jimbanach/copilot-cli-config) for the full plan.*
+*Major upgrade in progress — watch this repo for updates.*
 
 ## [v1.5.1] - 2026-03-22
 
