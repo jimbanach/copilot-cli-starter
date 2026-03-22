@@ -3,7 +3,21 @@
 All notable changes to this configuration are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased] - 2026-03-21
+## [Unreleased] - v2.0
+
+*Major upgrade in progress — see upstream [copilot-cli-config](https://github.com/jimbanach/copilot-cli-config) for the full plan.*
+
+## [v1.5.1] - 2026-03-22
+
+### Added
+- `financial-analyst` persona — fiduciary-minded financial analyst and tax strategist (templated with {{variables}} for privacy)
+- `tax-accountant` persona — tax accountant with federal and state tax law expertise (templated with {{variables}} for privacy)
+- `code-coach` persona — coding coach for learning and mentoring
+
+### Changed
+- `image-generation` SKILL.md: GPT-Image-1.5 as default edit model, medium quality default with cost guidance
+
+## [v1.5] - 2026-03-21
 
 ### Changed
 - Renamed persona files from `AGENTS.md` to `persona.instructions.md` with `applyTo: "**"` frontmatter (#72)
@@ -126,6 +140,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - `meeting-video-analyzer.agent.md`: Disabled (moved to local `_disabled/`)
 ### Added
 - `.gitignore`: `_disabled/` pattern — agents placed in this local folder are excluded from sync
+
+## [v1.0] - 2026-03-02 — Initial Platform Release
 
 ## [2026-03-02] - Backlog fixes + Project storage (#47)
 ### Added
