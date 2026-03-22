@@ -4,6 +4,8 @@ Portable Copilot CLI configuration with 3-layer instruction model, persona switc
 
 > **🚧 v2.0 Upgrade In Progress** — A major update is coming from upstream that adds execution discipline, skill chaining, project analysis, task orchestration, and implementation playbooks. Current stable release: [v1.5.1](https://github.com/jimbanach/copilot-cli-starter/releases/tag/v1.5.1).
 
+> **🙏 Help Wanted** — We welcome all feedback! If you try this setup, please [open an issue](../../issues/new) with your experience, suggestions, or bugs you find.
+
 ## Quick Links
 
 - [CHANGELOG](./CHANGELOG.md)
